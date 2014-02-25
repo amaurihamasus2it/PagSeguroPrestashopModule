@@ -52,13 +52,10 @@ function redirecToPageError(){
     window.location.href = baseDir + 'modules/pagseguro/controllers/front/error.php';
 }
 </script>
-   
 
-{if $version >= '1.5.0.2'}
-    <style type="text/css" media="all">{literal}div#center_column{ width: 757px; }{/literal}</style>
-{else}
-    <style type="text/css" media="all">{literal}div#center_column{ width: 535px; }{/literal}</style>
-{/if}
+<style type="text/css" media="all"> 
+	div#center_column{ width: {$width_center_column}; }
+</style>
 
 {capture name=path}{l s='Pagamento via PagSeguro' mod='pagseguro'}{/capture}
 {include file="$tpl_dir./breadcrumb.tpl"}
