@@ -34,15 +34,18 @@ class PagSeguroPaymentOrderPrestashop
     
     private $context;
     
-    public function __construct() {
+    public function __construct()
+    {
         $this->context = Context::getContext();
     }
     
-    private function returnUrlPaymentForVersionModule() {
+    private function returnUrlPaymentForVersionModule()
+    {
         return version_compare(_PS_VERSION_, '1.5.0.3', '<=') ? $this->paymentUrlPS14 : $this->paymentUrlPS15;
     }
     
-    private function setCurrencyVariable($id_currency) {
+    private function setCurrencyVariable($id_currency)
+    {
         $totalOrder = $this->context->cart->getOrderTotal(true, Cart::BOTH);
         $current_currency = new Currency($this->context->cart->id_currency);
         $new_currency = new Currency($id_currency);
@@ -66,7 +69,7 @@ class PagSeguroPaymentOrderPrestashop
         $this->context->smarty->assign(
             array(
                 'version' => _PS_VERSION_,
-                'width_center_column' => version_compare(_PS_VERSION_, '1.5.0.2','>=') ? '757px' : '535px',
+                'width_center_column' => version_compare(_PS_VERSION_,'1.5.0.2','>=') ? '757px' : '535px',
                 'image_payment' => __PS_BASE_URI__ . 'modules/pagseguro/assets/images/logops_86x49.png',
                 'nbProducts' => $this->context->cart->nbProducts(),
                 'current_currency_id' => $this->context->currency->id,
@@ -80,5 +83,4 @@ class PagSeguroPaymentOrderPrestashop
                 'checkout' => Configuration::get('PAGSEGURO_CHECKOUT'))
         );
     }
-    
 }

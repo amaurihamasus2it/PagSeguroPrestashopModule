@@ -220,28 +220,34 @@ class Util
         return __PS_BASE_URI__ . 'modules/pagseguro/assets/css/styles-version-15.css';
     }
     
-    private static function getBaseDefaultUrl() {
+    private static function getBaseDefaultUrl()
+    {
         return _PS_BASE_URL_ . __PS_BASE_URI__;
     }
     
-    public static function getDefaultRedirectUrlPS14() {
+    public static function getDefaultRedirectUrlPS14()
+    {
         return self::getBaseDefaultUrl();
     }
     
-    public static function getDefaultRedirectUrlPS15() {
+    public static function getDefaultRedirectUrlPS15()
+    {
         $index = version_compare(_PS_VERSION_, '1.5.0.3', '<=') ? '' : 'index.php';
         return self::getBaseDefaultUrl() . $index;
     }
     
-    public static function getDefaultNotificationUrlPS14() {
+    public static function getDefaultNotificationUrlPS14()
+    {
         return self::getBaseDefaultUrl() . 'modules/pagseguro/standard/front/notification.php';
     }
     
-    public static function getDefaultNotificationUrlPS15() {
+    public static function getDefaultNotificationUrlPS15()
+    {
         return self::getBaseDefaultUrl() . 'index.php?fc=module&module=pagseguro&controller=notification';
     }
     
-    public static function urlToRedirectPS14 (Array $data) {
+    public static function urlToRedirectPS14 (Array $data)
+    {
         
         $urlToCompose = self::getRedirectUrl();
         if (Tools::isEmpty($urlToCompose)) {
@@ -252,38 +258,44 @@ class Util
             $data['id_module'] . '&id_order=' . $data['id_order'] . '&key=' . $data['key'];
     }
     
-    public static function urlToRedirectPS15 (Array $data) {
+    public static function urlToRedirectPS15 (Array $data)
+    {
 
         $urlToCompose = self::getRedirectUrl();
         if (Tools::isEmpty($urlToCompose)) {
             $urlToCompose = self::getDefaultRedirectUrlPS15();
         }
 
-        return $urlToCompose . '?controller=order-confirmation&id_cart=' . $data['id_cart'] . '&id_module=' . $data['id_module'] .
-             '&id_order=' . $data['id_order'] . '&key=' . $data['key'];
+        return $urlToCompose . '?controller=order-confirmation&id_cart=' . $data['id_cart'] .
+        '&id_module=' . $data['id_module'] . '&id_order=' . $data['id_order'] . '&key=' . $data['key'];
     }
     
-    public static function urlToNotificationPS14 () {
+    public static function urlToNotificationPS14 ()
+    {
         $urlToNotification = self::getNotificationUrl();
         return Tools::isEmpty($urlToNotification) ? self::getDefaultNotificationUrlPS14() : $urlToNotification;
     }
     
-    public static function urlToNotificationPS15 () {
+    public static function urlToNotificationPS15 ()
+    {
         $urlToNotification = self::getNotificationUrl();
         return Tools::isEmpty($urlToNotification) ? self::getDefaultNotificationUrlPS15() : $urlToNotification;
     }
     
-    public static function getNotificationUrl() {
+    public static function getNotificationUrl()
+    {
         return Configuration::get('PAGSEGURO_NOTIFICATION_URL');
     }
     
-    public static function getRedirectUrl() {
+    public static function getRedirectUrl()
+    {
         return Configuration::get('PAGSEGURO_URL_REDIRECT');
     }
     
-    public static function convertPriceFull($amount, $currency_from = null, $currency_to = null) {
+    public static function convertPriceFull($amount, $currency_from = null, $currency_to = null)
+    {
         
-        if(version_compare(_PS_VERSION_, '1.5', '>')) {
+        if (version_compare(_PS_VERSION_, '1.5', '>')) {
             return Tools::convertPriceFull($amount, $currency_from, $currency_to);
         } else {
             
@@ -309,7 +321,5 @@ class Util
             }
             return Tools::ps_round($amount, 2);
         }
-
     }
-
 }

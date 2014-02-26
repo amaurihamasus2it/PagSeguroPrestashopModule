@@ -55,7 +55,8 @@ class PagSeguroPS1501ToPS1503 implements PagSeguroModuleConfigurable
                 'image' => __PS_BASE_URI__ . 'modules/pagseguro/assets/images/logops_86x49.png',
                 'this_path' => __PS_BASE_URI__ . 'modules/pagseguro/',
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/pagseguro/'
-            ));
+            )
+        );
     }
 
     public function returnPaymentConfiguration($params)
@@ -67,11 +68,15 @@ class PagSeguroPS1501ToPS1503 implements PagSeguroModuleConfigurable
             
             $this->context->smarty->assign(
                 array(
-                    'total_to_pay' => Tools::displayPrice($params['objOrder']->total_paid, $this->context->currency->id, 
-                        false),
+                    'total_to_pay' => Tools::displayPrice(
+                            $params['objOrder']->total_paid,
+                            $this->context->currency->id,
+                            false
+                        ),
                     'status' => 'ok',
                     'id_order' => (int) $params['objOrder']->id
-                ));
+                )
+            );
             
             if (isset($params['objOrder']->reference) && ! Tools::isEmpty($params['objOrder']->reference)) {
                 $this->context->smarty->assign('reference', $params['objOrder']->reference);
@@ -101,5 +106,3 @@ class PagSeguroPS1501ToPS1503 implements PagSeguroModuleConfigurable
         return Util::getJsBehaviorPS15();
     }
 }
-
-

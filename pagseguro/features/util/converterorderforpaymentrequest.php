@@ -47,7 +47,8 @@ class ConverterOrderForPaymentRequest
         $this->context = Context::getContext();
     }
     
-    public function convertToRequestData() {
+    public function convertToRequestData()
+    {
         $this->generatePagSeguroRequestData();
     }
     
@@ -66,7 +67,7 @@ class ConverterOrderForPaymentRequest
     public function request($isLightBox)
     {
         try {
-        return $this->performPagSeguroRequest($isLightBox);
+            return $this->performPagSeguroRequest($isLightBox);
         } catch (PagSeguroServiceException $e) {
             throw $e;
         } catch (Exception $e) {
@@ -107,7 +108,9 @@ class ConverterOrderForPaymentRequest
 
     private function getCartDiscounts()
     {
-        $cart_discounts = version_compare(_PS_VERSION_, '1.5', '<') ? $this->context->cart->getDiscounts() : $this->context->cart->getCartRules();
+        $cart_discounts = version_compare(_PS_VERSION_, '1.5', '<') ?
+            $this->context->cart->getDiscounts() :
+            $this->context->cart->getCartRules();
         
         $totalDiscouts = (float) 0;
         
@@ -143,8 +146,12 @@ class ConverterOrderForPaymentRequest
             
             if ($this->context->cart->id_currency != $id_currency && ! is_null($id_currency)) {
                 $pagSeguro_item->setAmount(
-                    Util::convertPriceFull($product['price_wt'], new Currency($this->context->cart->id_currency), 
-                        new Currency($id_currency)));
+                    Util::convertPriceFull(
+                        $product['price_wt'],
+                        new Currency($this->context->cart->id_currency), 
+                        new Currency($id_currency)
+                    )
+                );
             } else {
                 $pagSeguro_item->setAmount($product['price_wt']);
             }
@@ -234,7 +241,9 @@ class ConverterOrderForPaymentRequest
             
             $fullAddress = $this->addressConfig($delivery_address->address1);
             
-            $street = (is_null($fullAddress[0]) || empty($fullAddress[0])) ? $delivery_address->address1 : $fullAddress[0];
+            $street = (is_null($fullAddress[0]) || empty($fullAddress[0])) ?
+                $delivery_address->address1 :
+                $fullAddress[0];
             
             $number = is_null($fullAddress[1]) ? '' : $fullAddress[1];
             $complement = is_null($fullAddress[2]) ? '' : $fullAddress[2];
@@ -284,13 +293,16 @@ class ConverterOrderForPaymentRequest
 
     private function setNotificationUrl()
     {
-        return version_compare(_PS_VERSION_, '1.5.0.3', '<') ? Util::urlToNotificationPS14() : Util::urlToNotificationPS15();
+        return version_compare(_PS_VERSION_, '1.5.0.3', '<') ?
+            Util::urlToNotificationPS14() :
+            Util::urlToNotificationPS15();
     }
 
     private function setRedirectUrl(Array $additional_infos)
     {
-        return version_compare(_PS_VERSION_, '1.5.0.3', '<') ? Util::urlToRedirectPS14($additional_infos) : Util::urlToRedirectPS15(
-            $additional_infos);
+        return version_compare(_PS_VERSION_, '1.5.0.3', '<') ?
+            Util::urlToRedirectPS14($additional_infos) :
+            Util::urlToRedirectPS15($additional_infos);
     }
 
     private function performPagSeguroRequest($isLightBox)
@@ -307,8 +319,10 @@ class ConverterOrderForPaymentRequest
             $this->setPagSeguroCMSVersion();
             
             /* Performing request */
-            $credentials = new PagSeguroAccountCredentials(Configuration::get('PAGSEGURO_EMAIL'), 
-                Configuration::get('PAGSEGURO_TOKEN'));
+            $credentials = new PagSeguroAccountCredentials(
+                Configuration::get('PAGSEGURO_EMAIL'),
+                Configuration::get('PAGSEGURO_TOKEN')
+            );
             
             $url = $this->paymentRequest->register($credentials);
             
@@ -321,7 +335,8 @@ class ConverterOrderForPaymentRequest
                         'code' => $code,
                         'redirect' => $this->urlToRedirect,
                         'urlCompleta' => $url
-                    ));
+                    )
+                );
             }
             /* Redirecting to PagSeguro */
             if (Validate::isUrl($url)) {

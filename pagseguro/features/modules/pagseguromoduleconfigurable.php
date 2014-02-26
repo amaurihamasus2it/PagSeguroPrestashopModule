@@ -25,7 +25,8 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
-interface PagSeguroModuleConfigurable {
+interface PagSeguroModuleConfigurable
+{
     
     public function installConfiguration();
     public function uninstallConfiguration();
@@ -36,6 +37,4 @@ interface PagSeguroModuleConfigurable {
     public function getDefaultRedirectionUrl();
     public function getCssDisplay();
     public function getJsBehaviors();
-    
 }
-

@@ -105,10 +105,15 @@ class PagSeguroValidateOrderPrestashop
         }
         
         $this->module->validateOrder(
-            (int) $this->context->cart->id, Configuration::get('PS_OS_PAGSEGURO'), 
+            (int) $this->context->cart->id,
+            Configuration::get('PS_OS_PAGSEGURO'),
             (float) $this->context->cart->getOrderTotal(true, Cart::BOTH),
-            $this->module->displayName, null, null, 
-            (int) $this->context->currency->id, false, $customer->secure_key);
+            $this->module->displayName,
+            null,
+            null,
+            (int) $this->context->currency->id,
+            false,
+            $customer->secure_key);
         
         return array(
             'id_cart' => (int) $this->context->cart->id,
@@ -116,7 +121,5 @@ class PagSeguroValidateOrderPrestashop
             'id_order' =>$this->module->currentOrder,
             'key' => $customer->secure_key
         );
-
     }
 }
-

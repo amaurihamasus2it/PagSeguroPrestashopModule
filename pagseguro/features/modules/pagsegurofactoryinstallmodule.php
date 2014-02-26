@@ -29,19 +29,19 @@ include_once dirname(__FILE__) . '/pagseguroPS14.php';
 include_once dirname(__FILE__) . '/pagseguroPS15.php';
 include_once dirname(__FILE__) . '/pagseguroPS1501toPS1503.php';
 
-class PagSeguroFactoryInstallModule {
+class PagSeguroFactoryInstallModule
+{
         
-    public static function createModule($version) {
+    public static function createModule($version)
+    {
         
         switch ($version) {
-            case version_compare($version, '1.5.0.1', '<') :
+            case version_compare($version, '1.5.0.1', '<'):
                 return new PagSeguroPS14($context);
-            case version_compare($version, '1.5.0.1', '>=') && version_compare($version, '1.5.0.3', '<=') :
+            case version_compare($version, '1.5.0.1', '>=') && version_compare($version, '1.5.0.3', '<='):
                 return new PagSeguroPS1501ToPS1503();
-            case version_compare($version, '1.5.0.3', '>') :
+            case version_compare($version, '1.5.0.3', '>'):
                 return new PagSeguroPS15();
         }
     }
-
 }
-

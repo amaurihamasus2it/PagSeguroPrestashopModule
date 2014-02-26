@@ -54,7 +54,8 @@ class PagSeguroPS15 implements PagSeguroModuleConfigurable
                 'image' => __PS_BASE_URI__ . 'modules/pagseguro/assets/images/logops_86x49.png',
                 'this_path' => __PS_BASE_URI__ . 'modules/pagseguro/',
                 'this_path_ssl' => Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . 'modules/pagseguro/'
-            ));
+            )
+        );
     }
 
     public function returnPaymentConfiguration($params)
@@ -86,7 +87,9 @@ class PagSeguroPS15 implements PagSeguroModuleConfigurable
 
     public function getNotificationUrl()
     {
-        return Tools:: isEmpty(Util::getNotificationUrl()) ? Util::getDefaultNotificationUrlPS15() : Util::getNotificationUrl();
+        return Tools:: isEmpty(Util::getNotificationUrl()) ?
+            Util::getDefaultNotificationUrlPS15() :
+            Util::getNotificationUrl();
     }
     
     public function getDefaultRedirectionUrl()

@@ -33,24 +33,24 @@ include_once dirname(__FILE__) . '/../../pagseguro.php';
 include_once dirname(__FILE__) . '/../../backward_compatibility/backward.php';
 include_once dirname(__FILE__) . '/../../features/validation/pagsegurovalidateorderprestashop.php';
 
-    $pag_seguro = new PagSeguro();
-    $validate = new PagSeguroValidateOrderPrestashop($pag_seguro);
+$pag_seguro = new PagSeguro();
+$validate = new PagSeguroValidateOrderPrestashop($pag_seguro);
 
-    try {
-        
-        $validate->validate();
-        if($checkout) {
-            die($validate->request($checkout));
-        }
-        Tools::redirectLink($validate->request($checkout));
-    } catch (PagSeguroServiceException $exc) {
-        canceledOrderForErro();
-        displayErroPage();
-    } catch (Exception $e) {
-        displayErroPage();
+try {
+    $validate->validate();
+    if ($checkout) {
+        die($validate->request($checkout));
     }
+    Tools::redirectLink($validate->request($checkout));
+} catch (PagSeguroServiceException $exc) {
+    canceledOrderForErro();
+displayErroPage();
+} catch (Exception $e) {
+    displayErroPage();
+}
     
-function displayErroPage() {
+function displayErroPage()
+{
     $showView = new BWDisplay();
     $showView->setTemplate(_PS_MODULE_DIR_.'pagseguro/views/templates/front/error.tpl');
     $showView->run();
