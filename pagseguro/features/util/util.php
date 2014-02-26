@@ -35,7 +35,7 @@ class Util
         '2' => 'UTF-8'
     );
 
-    private static $active_log = array(
+    private static $active = array(
         '0' => 'NÃO',
         '1' => 'SIM'
     );
@@ -169,15 +169,35 @@ class Util
         'PS_OS_PAYPAL' => 11,
         'PS_OS_WS_PAYMENT' => 12
     );
-
+    
+    private static $days_recovery = array(
+        0 => 1, 1 => 2, 2 => 3, 3 => 4, 4 => 5,
+        5 => 6, 6 => 7, 7 => 8, 8 => 9, 9 => 10
+    );
+    
+    private static $days_search = array(
+        0 => 5,  1 => 10, 2 => 15,
+        3 => 20, 4 => 25, 5 => 30
+    );
+    
+    public static function getDaysSearch()
+    {
+        return self::$days_search;
+    }
+    
+    public static function getDaysRecovery()
+    {
+        return self::$days_recovery;
+    }
+    
     public static function getCharsetOptions()
     {
         return self::$charset_options;
     }
 
-    public static function getActiveLog()
+    public static function getActive()
     {
-        return self::$active_log;
+        return self::$active;
     }
     
     public static function getTypeCheckout()

@@ -47,7 +47,7 @@ class PagSeguro extends PaymentModule
     {
         $this->name = 'pagseguro';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6';
+        $this->version = '1.7';
         $this->author = 'PagSeguro Internet LTDA.';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
@@ -94,6 +94,8 @@ class PagSeguro extends PaymentModule
             ! Configuration::updateValue('PAGSEGURO_NOTIFICATION_URL', '') or
             ! Configuration::updateValue('PAGSEGURO_CHARSET', PagSeguroConfig::getData('application', 'charset')) or
             ! Configuration::updateValue('PAGSEGURO_LOG_ACTIVE', PagSeguroConfig::getData('log', 'active')) or
+            ! Configuration::updateValue('PAGSEGURO_RECOVERY_ACTIVE', false) or
+            ! Configuration::updateValue('PAGSEGURO_DAYS_RECOVERY', '') or
             ! Configuration::updateValue('PAGSEGURO_CHECKOUT', false) or
             ! Configuration::updateValue(
                 'PAGSEGURO_LOG_FILELOCATION',
@@ -116,13 +118,15 @@ class PagSeguro extends PaymentModule
         or ! Configuration::deleteByName('PAGSEGURO_NOTIFICATION_URL')
         or ! Configuration::deleteByName('PAGSEGURO_CHARSET')
         or ! Configuration::deleteByName('PAGSEGURO_LOG_ACTIVE')
+        or ! Configuration::deleteByName('PAGSEGURO_RECOVERY_ACTIVE')
+        or ! Configuration::deleteByName('PAGSEGURO_DAYS_RECOVERY')
         or ! Configuration::deleteByName('PAGSEGURO_LOG_FILELOCATION')
         or ! Configuration::deleteByName('PS_OS_PAGSEGURO')
-        or ! Configuration::deleteByName('PAGSEGURO_CHECKOUT')
+		or ! Configuration::deleteByName('PAGSEGURO_CHECKOUT')
         or ! parent::uninstall()) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -142,23 +146,137 @@ class PagSeguro extends PaymentModule
             }
         }
         
-        $currency = self::returnIdCurrency();
-        
-        /* Currency validation */
-        if (! $currency) {
-            $this->html .= '<div class="alert warn" '.$this->getWidthVersion(_PS_VERSION_).' ">'
-                . $this->missedCurrencyMessage() . '</div>';
-        }
-        
         $this->html .= $this->displayForm();
         
         return $this->html;
     }
-
+    
+    private function getConfigurationTabHtml()
+    {
+        $charset = Util::getCharsetOptions();
+        $optionCharset = "";
+        $selection = array_search(
+            Configuration::get('PAGSEGURO_CHARSET'),
+            Util::getCharsetOptions()
+        );
+    
+        foreach ($charset as $key => $value){
+            if ($key == $selection) {
+                $optionCharset .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
+            } else {
+                $optionCharset .= "<option value='" . $key . "'>" . $value . "</option>";
+            }
+        }
+    
+        $checkout = Util::getTypeCheckout();
+        $optionCheckout = "";
+        $selection = Configuration::get('PAGSEGURO_CHECKOUT');
+    
+        foreach ($checkout as $key => $value){
+            if ($key == $selection) {
+                $optionCheckout .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
+            } else {
+                $optionCheckout .= "<option value='" . $key . "'>" . $value . "</option>";
+            }
+        }
+        $conteudo = '';
+        $conteudo .= include(dirname(__FILE__) . '\menu\configuracoes.phtml');
+        return $conteudo;
+    
+    }
+    
+    private function getExtrasTabHtml()
+    {
+        $active = Util::getActive();
+        $optionLog = "";
+        $selection = Configuration::get('PAGSEGURO_LOG_ACTIVE');
+    
+        foreach ($active as $key => $value){
+            if ($key == $selection) {
+                $optionLog .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
+            } else {
+                $optionLog .= "<option value='" . $key . "'>" . $value . "</option>";
+            }
+        }
+    
+        $optionRecovery = "";
+        $selection = Configuration::get('PAGSEGURO_RECOVERY_ACTIVE');
+    
+        foreach ($active as $key => $value){
+            if ($key == $selection) {
+                $optionRecovery .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
+            } else {
+                $optionRecovery .= "<option value='" . $key . "'>" . $value . "</option>";
+            }
+        }
+    
+        $validLink = "";
+        $selection = Tools::safeOutput(Configuration::get('PAGSEGURO_DAYS_RECOVERY'));
+    
+        foreach (Util::getDaysRecovery() as  $key => $value) {
+            if ($key == $selection) {
+                $validLink .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
+            } else {
+                $validLink .= "<option value='" . $key . "'>" . $value . "</option>";
+            }
+        }
+    
+        $conteudo = "";
+        $conteudo .= include(dirname(__FILE__) . '\menu\extras.phtml');
+        return $conteudo;
+    }
+    
+    private function getConciliationTabHtml()
+    {
+        $dias = "";
+        $image = '../modules/pagseguro/assets/images/';
+         
+        foreach (Util::getDaysSearch() as $value ) {
+            $dias .= "<option value='" . $value . "'>" . $value . "</option>";
+        }
+    
+        $conteudo = "";
+        $conteudo .= include(dirname(__FILE__) . '\menu\conciliacao.phtml');
+        return $conteudo;
+    
+    }
+    
+    private function getRequirementsTabHtml()
+    {
+        $image = '../modules/pagseguro/assets/images/';
+        $error = array();
+    
+        $validation = PagSeguroConfig::validateRequirements();
+        foreach ($validation as $key => $value) {
+            if(strlen($value) == 0) {
+                $error[$key][0] = $image.'ok.png';
+                $error[$key][1] = null;
+            } else {
+                $error[$key][0] = $image.'delete.png';
+                $error[$key][1] = $value;
+            }
+        }
+    
+        $currency = self::returnIdCurrency();
+        /* Currency validation */
+        if (!$currency) {
+            $error['moeda'][0] = $image.'delete.png';
+            $error['moeda'][1] = $this->missedCurrencyMessage();
+        } else {
+            $error['moeda'][0] = $image.'ok.png';
+            $error['moeda'][1] = null;
+        }
+    
+        $conteudo = "";
+        $conteudo .= include(dirname(__FILE__) . '\menu\requerimentos.phtml');
+        return $conteudo;
+    
+    }
+    
     private function displayForm()
     {
         global $smarty;
-        
+    
         $smarty->assign('module_dir', _PS_MODULE_DIR_ . 'pagseguro/');
         $smarty->assign('action_post', Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']));
         $smarty->assign('email_user', Tools::safeOutput(Configuration::get('PAGSEGURO_EMAIL')));
@@ -173,17 +291,48 @@ class PagSeguro extends PaymentModule
                 Util::getCharsetOptions()
             )
         );
-        $smarty->assign('active_log', Util::getActiveLog());
+        $smarty->assign('active_log', Util::getActive());
         $smarty->assign('type_checkout', Util::getTypeCheckout());
         $smarty->assign('checkout_selected', Configuration::get('PAGSEGURO_CHECKOUT'));
         $smarty->assign('log_selected', Configuration::get('PAGSEGURO_LOG_ACTIVE'));
+        $smarty->assign('recovery_selected', Configuration::get('PAGSEGURO_RECOVERY_ACTIVE'));
         $smarty->assign('diretorio_log', Tools::safeOutput(Configuration::get('PAGSEGURO_LOG_FILELOCATION')));
+        $smarty->assign('days_recovery', Configuration::get('PAGSEGURO_DAYS_RECOVERY'));
         $smarty->assign('checkActiveSlide', Tools::safeOutput($this->checkActiveSlide()));
         $smarty->assign('css_version', $this->getCssDisplay());
-        $smarty->assign('js_behavior_version', $this->getJsBehavior());
+    
+        $smarty->assign(array(
+            'tab' => array(
+                'config' => array(
+                    'title' => $this->l('Configuração'),
+                    'content' => $this->getConfigurationTabHtml(),
+                    'tab' => 1,
+                    'selected' => true,
+                ),
+                'extras' => array(
+                    'title' => $this->l('Extras'),
+                    'content' => $this->getExtrasTabHtml(),
+                    'tab' => 2,
+                    'selected' => false,
+                ),
+                'conciliation' => array(
+                    'title' => $this->l('Conciliação'),
+                    'content' => $this->getConciliationTabHtml(),
+                    'tab' => 3,
+                    'selected' => false,
+                ),
+                'requirements' => array(
+                    'title' => $this->l('Requisitos'),
+                    'content' => $this->getRequirementsTabHtml(),
+                    'tab' => 4,
+                    'selected' => false,
+                ),
+            )
+        ));
+    
         return $this->display(__PS_BASE_URI__ . 'modules/pagseguro', 'admin_pagseguro.tpl');
     }
-
+    
     /**
      * Realize post validations according with PagSeguro standards
      * case any inconsistence, an item is added to $_postErrors
@@ -199,6 +348,7 @@ class PagSeguro extends PaymentModule
             $charset = Tools::getValue('pagseguro_charset');
             $pagseguro_log = Tools::getValue('pagseguro_log');
             $pagseguro_checkout = Tools::getValue('pagseguro_checkout');
+            $pagseguro_recovery = Tools::getValue('pagseguro_days_recovery');
             
             /* E-mail validation */
             if (! $email) {
@@ -232,7 +382,7 @@ class PagSeguro extends PaymentModule
             }
             
             /* Log validation */
-            if (! array_key_exists($pagseguro_log, Util::getActiveLog())) {
+            if (! array_key_exists($pagseguro_log, Util::getActive())) {
                 $this->errors[] = $this->invalidValue('LOG');
             }
         }
@@ -267,7 +417,7 @@ class PagSeguro extends PaymentModule
     
     private function getWidthVersion($module_version)
     {
-        return version_compare($module_version, '1.5', '<') ? 'style="width: 911px;' : 'style="width: 935px;';
+        return version_compare($module_version, '1.5', '<') ? 'style="width: 896px;' : 'style="width: 935px;';
     }
     
 
