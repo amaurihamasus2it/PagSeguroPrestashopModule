@@ -86,7 +86,7 @@ class PagSeguroPS14 implements PagSeguroModuleConfigurable
                         $params['objOrder']->total_paid_real,
                         $this->context->currency->id,
                         false
-                        ),
+                    ),
                     'status' => 'ok',
                     'id_order' => (int) $params['objOrder']->id
                 )

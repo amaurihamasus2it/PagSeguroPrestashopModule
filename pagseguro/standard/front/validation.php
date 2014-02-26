@@ -44,7 +44,7 @@ try {
     Tools::redirectLink($validate->request($checkout));
 } catch (PagSeguroServiceException $exc) {
     canceledOrderForErro();
-displayErroPage();
+    displayErroPage();
 } catch (Exception $e) {
     displayErroPage();
 }

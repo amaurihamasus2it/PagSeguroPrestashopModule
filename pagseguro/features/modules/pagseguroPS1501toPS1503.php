@@ -69,10 +69,10 @@ class PagSeguroPS1501ToPS1503 implements PagSeguroModuleConfigurable
             $this->context->smarty->assign(
                 array(
                     'total_to_pay' => Tools::displayPrice(
-                            $params['objOrder']->total_paid,
-                            $this->context->currency->id,
-                            false
-                        ),
+                        $params['objOrder']->total_paid,
+                        $this->context->currency->id,
+                        false
+                    ),
                     'status' => 'ok',
                     'id_order' => (int) $params['objOrder']->id
                 )

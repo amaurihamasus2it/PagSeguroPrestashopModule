@@ -148,7 +148,7 @@ class ConverterOrderForPaymentRequest
                 $pagSeguro_item->setAmount(
                     Util::convertPriceFull(
                         $product['price_wt'],
-                        new Currency($this->context->cart->id_currency), 
+                        new Currency($this->context->cart->id_currency),
                         new Currency($id_currency)
                     )
                 );

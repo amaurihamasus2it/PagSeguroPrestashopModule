@@ -113,7 +113,8 @@ class PagSeguroValidateOrderPrestashop
             null,
             (int) $this->context->currency->id,
             false,
-            $customer->secure_key);
+            $customer->secure_key
+        );
         
         return array(
             'id_cart' => (int) $this->context->cart->id,
