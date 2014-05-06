@@ -53,13 +53,6 @@
                     tags:false
                 }
                 });
-        });
-
-        $(document).ready(function() {
-        	jQuery('#editar').prop('disabled', true);
-        	jQuery('#editar').attr('disabled', true);
-        	document.getElementById("editar").disabled = true;
-        });
-  
+        }); 
     {/literal}
 </script>

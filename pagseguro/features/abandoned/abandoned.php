@@ -125,12 +125,13 @@ class PagSeguroAbandoned {
             $today = strtotime('today');
             $expiration = strtotime($params['data_expired']);
             
-            if ($expiration < $today) {
+            if ($expiration > $today) {
                 $isValidated = false;
             }
             
-            $order_state = OrderHistory::getLastOrderState($params['reference']);
-            if (strcmp($order_state->name, Util::getStatusCMS(0)) != 0) {
+            $initiated = Util::getStatusCMS(0);
+            $order_state = OrderHistory::getLastOrderState(((int)EncryptionIdPagSeguro::decrypt($params['reference'])));
+            if (strcmp($order_state->name, $initiated) != 0) {
                 $isValidated = false;
             }
 

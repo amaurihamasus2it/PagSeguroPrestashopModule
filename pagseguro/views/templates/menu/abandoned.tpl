@@ -38,7 +38,7 @@
                     {if $abandoned_orders && count($abandoned_orders)}
                         {foreach from=$abandoned_orders key=key_order item=value_order}
                             <tr>
-                                <td align="center"><input type="checkbox" id="send_{$k}" name="send_emails[]" value="customer={$value_order.customer}&reference={$value_order.reference}&recovery={$value_order.recovery_code}"></td>
+                                <td align="center"><input type="checkbox" id="send_{$key_order}" name="send_emails[]" value="customer={$value_order.customer}&reference={$value_order.reference}&recovery={$value_order.recovery_code}"></td>
                                 <td align="center" class="bold">{$value_order.data_add_cart|date_format:"%d/%m/%Y"}</td>
                                 <td align="center" class="bold">{l s='#'}{$value_order.reference|string_format:"%06d"}</td>
                                 <td align="center" class="bold">{$value_order.data_expired}</td>
