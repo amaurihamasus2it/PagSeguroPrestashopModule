@@ -243,9 +243,9 @@ class PagSeguro extends PaymentModule
 
         $conteudo = "";
         $conteudo = $this->display(
-                __PS_BASE_URI__ . 'modules/pagseguro',
-                '/views/templates/conciliation/conciliation.tpl'
-                );
+            __PS_BASE_URI__ . 'modules/pagseguro',
+            '/views/templates/conciliation/conciliation.tpl'
+        );
         
         return $conteudo;
     

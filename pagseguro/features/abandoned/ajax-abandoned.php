@@ -6,7 +6,7 @@ include_once dirname(__FILE__).'/../../pagseguro.php';
 
 foreach (Language::getLanguages(false) as $language) {
     if (strcmp($language["iso_code"], 'br') == 0) {
-        $idLang = $language["id_lang"];    
+        $idLang = $language["id_lang"];
     }
 }
 
@@ -26,25 +26,37 @@ switch ($ajaxRequest) {
         $template = '';
         $message = '';
         foreach ($orderMessage as $key => $value) {
-            if(strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0 ) {
-               $template = $value['name'];
-               $message = $value['message'];        
+            if  (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
+                $template = $value['name'];
+                $message = $value['message'];
             }
         }
 
         $params = array(
             '{message}' =>  $message,
-            '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recoveryCode.'" target="_blank"> click aqui para continuar sua compra </a>'
+            '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recoveryCode
+            .'" target="_blank"> click aqui para continuar sua compra </a>'
         );
 
-        $isSend = @Mail::Send($idLang, 'recovery_cart', $template, $params, $customer->email,
-        	$customer->firstname.' '.$customer->lastname, NULL, NULL, NULL, NULL, _PS_ROOT_DIR_ . '/modules/pagseguro/mails/', true);
+        $isSend = @Mail::Send(
+            $idLang,
+            'recovery_cart',
+            $template,
+            $params,
+            $customer->email,
+            $customer->firstname.' '.$customer->lastname,
+            null,
+            null,
+            null,
+            null,
+            _PS_ROOT_DIR_ . '/modules/pagseguro/mails/',
+            true
+        );
         
         if ($isSend) {
             echo '<div class="module_confirmation conf confirm" '.Util::getWidthVersion(_PS_VERSION_).' ">'
                 . $pagseguro->l('Email enviado com sucesso') . '</div>';
-        }
-        else {
+        } else {
             echo '<div class="module_error alert error" '.Util::getWidthVersion(_PS_VERSION_).' ">'
                 . $pagseguro->l('Falha ao enviar email') . '</div>';
         }
@@ -62,25 +74,38 @@ switch ($ajaxRequest) {
             $template = '';
             $message = '';
             foreach ($orderMessage as $key => $value) {
-                if(strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0 ) {
-                   $template = $value['name'];
-                   $message = $value['message'];        
+                if (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
+                    $template = $value['name'];
+                    $message = $value['message'];
                 }
             }
     
             $params = array(
                 '{message}' =>  $message,
-                '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recovery.'" target="_blank"> click aqui para continuar sua compra </a>'
+                '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recovery
+                .'" target="_blank"> click aqui para continuar sua compra </a>'
             );
     
-            $isSend = @Mail::Send($idLang, 'recovery_cart', $template, $params, $customer->email,
-            	$customer->firstname.' '.$customer->lastname, NULL, NULL, NULL, NULL, _PS_ROOT_DIR_ . '/modules/pagseguro/mails/', true);
+            $isSend = @Mail::Send(
+                $idLang,
+                'recovery_cart',
+                $template,
+                $params,
+                $customer->email,
+            	$customer->firstname.' '.$customer->lastname,
+                null,
+                null,
+                null,
+                null,
+                _PS_ROOT_DIR_ . '/modules/pagseguro/mails/',
+                true
+            );
                 
             if (!$isSend) {
                 echo '<div class="module_error alert error" '.Util::getWidthVersion(_PS_VERSION_).' ">'
                     . $pagseguro->l('Falha ao enviar email') . '</div>';
                 die();
-            }    
+            }
         }
 
         echo '<div class="module_confirmation conf confirm" '.Util::getWidthVersion(_PS_VERSION_).' ">'

@@ -90,13 +90,14 @@ class PagSeguroConciliation
                                 if ($this->verifyVersion() === false) {
 
                                     $this->createTables(
-                                            $row['id_order'],
-                                            $row['id_order_state'],
-                                            $row['status_pagseguro'],
-                                            $this->dateToBr($row['date_add']),
-                                            $this->getPrestashopStatus($row['current_state']),
-                                            $row['id_pagseguro'],
-                                            $row);
+                                        $row['id_order'],
+                                        $row['id_order_state'],
+                                        $row['status_pagseguro'],
+                                        $this->dateToBr($row['date_add']),
+                                        $this->getPrestashopStatus($row['current_state']),
+                                        $row['id_pagseguro'],
+                                        $row
+                                    );
 
                                 } else {
 
@@ -108,7 +109,7 @@ class PagSeguroConciliation
                                         $this->getPrestashopStatus($row['id_order_state']),
                                         $row['id_pagseguro'],
                                         $row
-                                        );
+                                    );
 
                                 }
                             }
@@ -325,7 +326,7 @@ class PagSeguroConciliation
                         AND psord.date_add >= DATE_SUB(CURDATE(),INTERVAL \''
                             .(isset($_POST['dias']) ? $_POST['dias'] : '5').
                         '\' DAY)';
-                }
+        }
 
                 $results = Db::getInstance()->ExecuteS($query);
                 echo Db::getInstance()->getMsgError();
@@ -514,10 +515,10 @@ class PagSeguroConciliation
         }
 
         LogPagSeguro::info(
-                "PagSeguroConciliation.Register( 'Alteração de Status da compra '"
-                . $dados['idOrder'] . "' para o Status '" . $dados['newStatus'] . "("
-                . $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end"
-                );
+            "PagSeguroConciliation.Register( 'Alteração de Status da compra '"
+            . $dados['idOrder'] . "' para o Status '" . $dados['newStatus'] . "("
+            . $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end"
+        );
     }
     
         /**
