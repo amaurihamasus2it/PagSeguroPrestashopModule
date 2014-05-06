@@ -17,7 +17,7 @@ class PagSeguroAbandoned {
 
     private $idStatusPagseguro;
     
-    private $idLang;
+    private $idLang = "";
     
     private $idInitiatedState;
     
@@ -25,11 +25,11 @@ class PagSeguroAbandoned {
 
         foreach (Language::getLanguages(false) as $language) {
             if (strcmp($language["iso_code"], 'br') == 0) {
-                $this->$idLang = $language["id_lang"];    
+                $this->idLang = $language["id_lang"];    
             }
         }
         
-        $order_state = OrderState::getOrderStates($this->$idLang);
+        $order_state = OrderState::getOrderStates($this->idLang);
         foreach ($order_state as $key => $value) {
             if (strcmp($value["name"], Util::getStatusCMS(0)) == 0) {
                 $this->idInitiatedState = $value["id_order_state"];

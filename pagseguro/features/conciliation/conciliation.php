@@ -413,17 +413,18 @@ class pagSeguroConciliation {
 
     }
 
-    private function getImages($statusPagSeguro,$row) {
+    private function getImages($statusPagSeguro, $row)
+    {
         $retorno = "<img src='../modules/pagseguro/assets/images/refreshDisabled.png'
                         border='0' alt='edit' title='Modificar'/>
                     ";
 
-        if(empty($statusPagSeguro)){
+        if (empty($statusPagSeguro)) {
             return $retorno;
         }
 
         foreach ($statusPagSeguro as $status) {
-            if($status['id_order_state'] == $row['id_order_state']) {
+            if ($status['id_order_state'] == $row['id_order_state']) {
                 return $retorno;
             }
         }
@@ -456,24 +457,26 @@ class pagSeguroConciliation {
         return $id_order_state;
     }
 
-    private function where($state) {
+    private function where($state)
+    {
         $where = "os.id_order_state = " . $state;
-        if(version_compare(_PS_VERSION_, '1.5.0.3', '>')) {
+        if (version_compare(_PS_VERSION_, '1.5.0.3', '>')) {
             return " WHERE deleted = 0 AND ". $where;
         } else {
             return " WHERE " . $where;
         }
     }
 
-    private function getColor($state,$pagSeguroState) {
+    private function getColor($state, $pagSeguroState)
+    {
         $where = $this->where($state);
-        $id_order_state = $this->getPagSeguroState($pagSeguroState,$where);
+        $id_order_state = $this->getPagSeguroState($pagSeguroState, $where);
 
-        if($id_order_state == 0) {
+        if ($id_order_state == 0) {
             return 'red';
         }
         foreach ($id_order_state as $id_state) {
-            if($state == $id_state['id_order_state']) {
+            if ($state == $id_state['id_order_state']) {
                 return 'green';
             }
         }
@@ -487,8 +490,9 @@ class pagSeguroConciliation {
      * @param array $dados;
      */
 
-    public function createLog($dados) {
-	
+    public function createLog($dados)
+    {
+
 		/* Retrieving configurated default charset */
         PagSeguroConfig::setApplicationCharset(Configuration::get('PAGSEGURO_CHARSET'));
         
@@ -497,12 +501,10 @@ class pagSeguroConciliation {
             PagSeguroConfig::activeLog(_PS_ROOT_DIR_ . Configuration::get('PAGSEGURO_LOG_FILELOCATION'));
         }
 
-        LogPagSeguro::info("PagSeguroConciliation.Register( 'Alteração de Status da compra '" . 
-            $dados['idOrder'] . "' para o Status '" . $dados['newStatus'] . "(" . 
-            $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end");
+        LogPagSeguro::info("PagSeguroConciliation.Register( 'Alteração de Status da compra '" . $dados['idOrder'] . "' para o Status '" . $dados['newStatus'] . "(" . $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end");
     }
     
- 	/**
+        /**
  	 * 
  	 * Update Order Status in Database
  	 * @param $id (int)
@@ -510,69 +512,69 @@ class pagSeguroConciliation {
  	 */
     public function updateStatus($id, $new_status)
     {
-		
-		if ($this->verifyVersion() === false){
-		
-			$query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
+
+		if ($this->verifyVersion() === false) {
+
+                        $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
 					 SET oh.`id_order_state` = '.$new_status.'
 					 WHERE oh.`id_order` = '.$id.'';
-					 
-			Db::getInstance()->executeS($query);
-			
-			$query = 'UPDATE `'._DB_PREFIX_.'orders` oh
+	 
+                        Db::getInstance()->executeS($query);
+
+                        $query = 'UPDATE `'._DB_PREFIX_.'orders` oh
 					 SET oh.`current_state` = '.$new_status.'
 					 WHERE oh.`id_order` = '.$id.'';
-			
-			Db::getInstance()->executeS($query);
-			
-		} else {
-		
-			
-			$query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
+
+                        Db::getInstance()->executeS($query);
+
+                } else {
+
+
+                        $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
 					 SET oh.`id_order_state` = '.$new_status.'
 					 WHERE oh.`id_order` = '.$id.'';
-			
-			Db::getInstance()->executeS($query);
-		
-		}
-		
+
+                        Db::getInstance()->executeS($query);
+
+                }
+
     }
-    
+
     public function getDays($daysRange)
     {
-    	
-    	$this->daysRange = $daysRange;
-    	
+
+            $this->daysRange = $daysRange;
+
     }
-    
-	private function subDayIntoDate($date, $days) 
-	{
-		
-		$date = date("Ymd");
-		
-	     $thisyear = substr ( $date, 0, 4 );
-	     $thismonth = substr ( $date, 4, 2 );
-	     $thisday =  substr ( $date, 6, 2 );
-	     $nextdate = mktime ( 0, 0, 0, $thismonth, $thisday - $days, $thisyear );
-	     
-	     $nData = strftime("%Y-%m-%d", $nextdate);
-	     
-	     return $nData."T00:00";
-	     
-	}
-	
-	private function dateToBr($data)
-	{
-		
-		$data = date("d/m/Y", strtotime($data));
-		
-		return $data;
-		
-	}
-	
-	public function dead()
-	{
-		die("I'm a dead man");
-	}
+
+    private function subDayIntoDate($date, $days)
+    {
+
+            $date = date("Ymd");
+
+            $thisyear = substr($date, 0, 4);
+            $thismonth = substr($date, 4, 2);
+            $thisday = substr($date, 6, 2);
+            $nextdate = mktime(0, 0, 0, $thismonth, $thisday - $days, $thisyear);
+
+            $nData = strftime("%Y-%m-%d", $nextdate);
+
+            return $nData."T00:00";
+
+    }
+
+    private function dateToBr($data)
+    {
+
+            $data = date("d/m/Y", strtotime($data));
+
+            return $data;
+
+    }
+
+    public function dead()
+    {
+            die("I'm a dead man");
+    }
     
 }
