@@ -1,3 +1,0 @@
-PagSeguroPrestashopModule
-=========================
-teste readme

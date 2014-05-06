@@ -2,126 +2,138 @@
 
 ini_set("display_errors", 1);
 
-include_once dirname(__FILE__) . 
-	'/../../../../config/config.inc.php';
-include_once dirname(__FILE__) . 
-	'/../../features/PagSeguroLibrary/PagSeguroLibrary.php';
-include_once dirname(__FILE__) . 
-	'/../../features/validation/pagsegurovalidateorderprestashop.php';
-include_once dirname(__FILE__) . 
-	'/../../features/PagSeguroLibrary/domain/PagSeguroTransactionSearchResult.class.php';
-include_once dirname(__FILE__) . 
-	'/../../features/PagSeguroLibrary/domain/PagSeguroTransactionStatus.class.php';
+include_once dirname(__FILE__) .
+        '/../../../../config/config.inc.php';
+include_once dirname(__FILE__) .
+        '/../../features/PagSeguroLibrary/PagSeguroLibrary.php';
+include_once dirname(__FILE__) .
+        '/../../features/validation/pagsegurovalidateorderprestashop.php';
+include_once dirname(__FILE__) .
+        '/../../features/PagSeguroLibrary/domain/PagSeguroTransactionSearchResult.class.php';
+include_once dirname(__FILE__) .
+        '/../../features/PagSeguroLibrary/domain/PagSeguroTransactionStatus.class.php';
 
 
-$conciliation = new pagSeguroConciliation();
+$conciliation = new PagSeguroConciliation();
 
-if (isset($_POST['idOrder']) ){
-	
-	$pagSeguroStatus = Util::getStatusCMS( $_POST['newIdStatus'] );
-	$status_id = $conciliation->getPestashopOrderStatusId($pagSeguroStatus);
-	$data = array ("idOrder" => $_POST['idOrder'], 
-					"newStatus" => $pagSeguroStatus, 
-					"newIdStatus" => $_POST['newIdStatus']);
-	$conciliation->createLog($data);
-	$conciliation->updateStatus($_POST['idOrder'], $status_id);
+if (isset($_POST['idOrder'])) {
 
-} elseif (isset($_POST['dias']) ) {
-	
-	$conciliation->getDays($_POST['dias']);
+        $pagSeguroStatus = Util::getStatusCMS( $_POST['newIdStatus'] );
+        $status_id = $conciliation->getPestashopOrderStatusId($pagSeguroStatus);
+        $data = array ("idOrder" => $_POST['idOrder'],
+                                        "newStatus" => $pagSeguroStatus,
+                                        "newIdStatus" => $_POST['newIdStatus']);
+        $conciliation->createLog($data);
+        $conciliation->updateStatus($_POST['idOrder'], $status_id);
+
+    } elseif (isset($_POST['dias'])) {
+
+        $conciliation->getDays($_POST['dias']);
     echo json_encode($conciliation->getTableResult());
 
-} else {
+    } else {
 
-	return $conciliation->getTableResult();
-	
+        return $conciliation->getTableResult();
+
 }
 
-class pagSeguroConciliation {
+class PagSeguroConciliation
+{
 
     private $obj_credential = "";
     private $errorMsg = false;
     private $tableResult = "";
     private $daysRange = 1;
     private $idStatusPagseguro;
-	
-    
+
+
     /**
-     * 
-     * Getters and Setter
-     */
-    
-    public function getTableResult() 
+    * 
+    * Getters and Setter
+    */
+
+    public function getTableResult()
     {
-		
-    	$this->set_obj_credential();
+
+        $this->setObjCredential();
         $tableResult = $this->setTableResults();
         return $tableResult;
-        
+
     }
-    
-	public function setTableResults() 
-    {   
-		
-    	if(!$this->errorMsg){
-		
-			if ($this->getPrestashopPaymentList()) 
-			{	
-				
-				$paymentPagSeguro = $this->getPagSeguroPaymentsList();
-				
-				if ($paymentPagSeguro){
-				
-					foreach ($this->getPrestashopPaymentList() as $key => $row)
-					{
-						
-						$row['status_pagseguro'] = '';
-						$row['id_status_pagseguro'] = '';
-						$row['id_pagseguro'] = '';
-						$imagesResults = '';
-						
-						foreach ( $paymentPagSeguro as  $value )
-						{
-							
-							if ( $row['id_order'] == $this->decryptId( $value['reference'] ) ){
-								
-								$row['id_pagseguro'] = $value['reference'];
-								$row['id_status_pagseguro'] = $value['status'];
-								$row['status_pagseguro'] = Util::getStatusCMS($value['status']);
-								
-								if ( $this->verifyVersion() === false ){
-									
-									$this->createTables($row['id_order'], $row['id_order_state'], $row['status_pagseguro'], $this->dateToBr($row['date_add']), $this->getPrestashopStatus($row['current_state']) , $row['id_pagseguro'], $row);
-								
-								} else {
-									
-									$this->createTables($row['id_order'], $row['id_order_state'], $row['status_pagseguro'], $this->dateToBr($row['date_add']), $this->getPrestashopStatus($row['id_order_state']) , $row['id_pagseguro'], $row);
-								
-								}
-							}
-							
-						}
-						
-					 }
-				
-				} else {
-					
-					return array('tabela' => $this->tableResult, 'errorMsg' => $this->errorMsg, 'regError' => true);
-					
-				}	
-				
-			}
-		
-		}
-		
-        return array('tabela' => $this->tableResult,'errorMsg' => $this->errorMsg, 'regError' => false );     
+
+    public function setTableResults()
+    {
+
+        if (!$this->errorMsg) {
+
+                        if ($this->getPrestashopPaymentList()) {
+
+                                $paymentPagSeguro = $this->getPagSeguroPaymentsList();
+
+                                if ($paymentPagSeguro) {
+
+                                        foreach ($this->getPrestashopPaymentList() as $key => $row) {
+
+                                                $row['status_pagseguro'] = '';
+                                                $row['id_status_pagseguro'] = '';
+                                                $row['id_pagseguro'] = '';
+                                                $imagesResults = '';
+
+                                                foreach ($paymentPagSeguro as $value) {
+
+                                                        if ($row['id_order'] == $this->decryptId($value['reference'])) {
+
+                                                                $row['id_pagseguro'] = $value['reference'];
+                                                                $row['id_status_pagseguro'] = $value['status'];
+                                                                $row['status_pagseguro'] = Util::getStatusCMS($value['status']);
+
+                                                                if ($this->verifyVersion() === false) {
+
+                                                                        $this->createTables(
+                                                                                $row['id_order'],
+                                                                                $row['id_order_state'],
+                                                                                $row['status_pagseguro'],
+                                                                                $this->dateToBr($row['date_add']),
+                                                                                $this->getPrestashopStatus($row['current_state']),
+                                                                                $row['id_pagseguro'],
+                                                                                $row);
+
+                                                                } else {
+
+                                                                        $this->createTables(
+                                                                                $row['id_order'],
+                                                                                $row['id_order_state'],
+                                                                                $row['status_pagseguro'],
+                                                                                $this->dateToBr($row['date_add']),
+                                                                                $this->getPrestashopStatus($row['id_order_state']),
+                                                                                $row['id_pagseguro'],
+                                                                                $row);
+
+                                                                }
+                                                        }
+
+                                                }
+
+                                         }
+
+                                } else {
+
+                                        return array('tabela' => $this->tableResult, 'errorMsg' => $this->errorMsg, 'regError' => true);
+
+                                }
+
+                        }
+
+                }
+
+        return array('tabela' => $this->tableResult,'errorMsg' => $this->errorMsg, 'regError' => false );
     }
-    
+
     /**
-     * 
-     * Set credentials account(e-mail) and token.
-     */
-	private function set_obj_credential() {
+    * 
+    * Set credentials account(e-mail) and token.
+    */
+    private function setObjCredential() {
         $email = Configuration::get('PAGSEGURO_EMAIL');
         $token = Configuration::get('PAGSEGURO_TOKEN');
         if(!empty($email) && !empty($token)) {
@@ -130,286 +142,280 @@ class pagSeguroConciliation {
             $this->errorMsg = true;
         }
     }
-	    
-	
-	/**
-	 * 
-	 * Get a list of payments.
-	 * Methods: getPagSeguroPaymentsList(); getToken(); decrypt(); validateRef();
-	 * 
-	 */
-	private function getPagSeguroPaymentsList()
+
+
+    /**
+    * 
+    * Get a list of payments.
+    * Methods: getPagSeguroPaymentsList(); getToken(); decrypt(); validateRef();
+    * 
+    */
+    private function getPagSeguroPaymentsList()
     {
-		
-    	$pageNumber = 1;
-    	$maxPageResults = 20;
-    	
-    	$hour = date("H:i");
-    	$hour = explode(':', $hour); 
-    	$hour = ($hour[0] - 1 ).":".$hour[1];
 
-    	$finalDate = date("Y-m-d")."T".$hour;
-    	
-    	if ( $this->daysRange == 0 ){
-    		
-    		$initialDate = $this->subDayIntoDate($finalDate, 0);
-    		
-    	} else {
-    		
-    		$initialDate = $this->subDayIntoDate($finalDate, $this->daysRange);	
-    		
-    	}
-    	
-		
-    	try 
-        {
-       
-			$result = PagSeguroTransactionSearchService::searchByDate(
-                $this->obj_credential,
-                $pageNumber,
-    			$maxPageResults,
-    			$initialDate,
-    			$finalDate
-            );
+        $pageNumber = 1;
+        $maxPageResults = 20;
 
-			$return = $this->validateRef($result);
-				
+        $finalDate = date("Y-m-d")."T".date("H:i");
+
+        if ($this->daysRange == 0) {
+
+                $initialDate = $this->subDayIntoDate($finalDate, 0);
+
+        } else {
+
+                $initialDate = $this->subDayIntoDate($finalDate, $this->daysRange);
+
         }
-        catch(PagSeguroServiceException $e)
-        {
-        	
-        	echo("Can't find informed user or token.");
-        	$return = false;
-        
+
+
+        try {
+
+                $result = PagSeguroTransactionSearchService::searchByDate(
+                    $this->obj_credential,
+                    $pageNumber,
+                    $maxPageResults,
+                    $initialDate,
+                    $finalDate
+                );
+
+                $return = $this->validateRef($result);
+
+        }
+        catch (PagSeguroServiceException $e) {
+
+                echo("Can't find informed user or token.");
+                $return = false;
+
         }
 
         return $return;
-        
+
     }
-    
+
     /**
-     * 
-     * checks if the PAGSEGURO_ID is the same and returns the related transactions
-     * @param PagSeguroTransactionSearchResult $result
-     * @param counter $n
-     */
-	public function validateRef(PagSeguroTransactionSearchResult $result, $n = 0)
-	{
+    * 
+    * checks if the PAGSEGURO_ID is the same and returns the related transactions
+    * @param PagSeguroTransactionSearchResult $result
+    * @param counter $n
+    */
+    public function validateRef(PagSeguroTransactionSearchResult $result, $n = 0)
+    {
 
-		$transactions = $result->getTransactions();
-		
-		foreach ($transactions as $key => $transactionSummary) 
-	    {
-	    	
-			$decrypt = $this->decrypt( $transactionSummary->getReference() );
-			
-			if ($this->getToken() == $decrypt){
-				
-				$prestashopTransactions[$n]['code'] = $transactionSummary->getCode();
-				$prestashopTransactions[$n]['reference'] = $transactionSummary->getReference();
-				$prestashopTransactions[$n++]['status'] = $transactionSummary->getStatus()->getValue();
-				
-			}
+        $transactions = $result->getTransactions();
 
-	    }
-	    
-	    if (!isset($prestashopTransactions)){
-	    	$prestashopTransactions = false;
-	    }
-	    
-	    return $prestashopTransactions;
-		
-	}
-	
-	/**
-	 * 
-	 * Grab a PAGSEGURO_ID and decrypts
-	 * @param string $reference
-	 */
-	private function decrypt($reference)
-	{
-		
-		return substr($reference, 0, 5);
-		
-	}
+        foreach ($transactions as $key => $transactionSummary) {
 
-	/**
-	 * 
-	 * Return PagSeguro ID
-	 */
-	private function getToken()
-	{
-		
-		$query = 'SELECT c.`name`, c.`value`
-				 FROM `'._DB_PREFIX_.'configuration` c
-				 WHERE c.`name` = "PAGSEGURO_ID"';
-		
-		$result = Db::getInstance()->executeS($query);
+                    $decrypt = $this->decrypt($transactionSummary->getReference());
 
-		return $result[0]['value'];
+                    if ($this->getToken() == $decrypt) {
 
-	}
-    
-	/**
-	 * 
-	 *  Return Prestashop payment list
-	 * 
-	 */
-	private function getPrestashopPaymentList()
-	{
-		if ( $this->verifyVersion() === false){
-		
-		$query = 'SELECT
-                    psord.`id_order`,
-                    psord.`date_add`,
-                    psord.`current_state`,
-                    osl.`name`,
-                    oh.`id_order_state`,
-                    (SELECT COUNT(od.`id_order`) FROM `ps_order_detail` od
-                            WHERE od.`id_order` = psord.`id_order`
-                            GROUP BY `id_order`) AS product_number
-                 
-                  FROM `'._DB_PREFIX_.'orders` AS psord
-                        LEFT JOIN `'._DB_PREFIX_.'order_history` oh
-                            ON (oh.`id_order` = psord.`id_order`)
-                        LEFT JOIN `'._DB_PREFIX_.'order_state` os
-                            ON (os.`id_order_state` = oh.`id_order_state`)
-                        LEFT JOIN `'._DB_PREFIX_.'order_state_lang` osl
-                            ON (os.`id_order_state` = osl.`id_order_state`)
-                            
-                 WHERE oh.`id_order_history` = (SELECT MAX(`id_order_history`) FROM `'._DB_PREFIX_.'order_history` moh
-                                                WHERE moh.`id_order` = psord.`id_order`
-                                                GROUP BY moh.`id_order`)                    
-                    AND psord.payment = "PagSeguro"
-                    AND osl.`id_lang` = psord.id_lang
-                    AND psord.date_add >= DATE_SUB(CURDATE(),INTERVAL \''
-                        .(isset($_POST['dias']) ? $_POST['dias'] : '5').
-                    '\' DAY)';
-          
-		  } else {
-		  
-		  $query = 'SELECT
-                    psord.`id_order`,
-                    psord.`date_add`,
-                    osl.`name`,
-                    oh.`id_order_state`,
-                    (SELECT COUNT(od.`id_order`) FROM `ps_order_detail` od
-                            WHERE od.`id_order` = psord.`id_order`
-                            GROUP BY `id_order`) AS product_number
-                 
-                  FROM `'._DB_PREFIX_.'orders` AS psord
-                        LEFT JOIN `'._DB_PREFIX_.'order_history` oh
-                            ON (oh.`id_order` = psord.`id_order`)
-                        LEFT JOIN `'._DB_PREFIX_.'order_state` os
-                            ON (os.`id_order_state` = oh.`id_order_state`)
-                        LEFT JOIN `'._DB_PREFIX_.'order_state_lang` osl
-                            ON (os.`id_order_state` = osl.`id_order_state`)
-                            
-                 WHERE oh.`id_order_history` = (SELECT MAX(`id_order_history`) FROM `'._DB_PREFIX_.'order_history` moh
-                                                WHERE moh.`id_order` = psord.`id_order`
-                                                GROUP BY moh.`id_order`)                    
-                    AND psord.payment = "PagSeguro"
-                    AND osl.`id_lang` = psord.id_lang
-                    AND psord.date_add >= DATE_SUB(CURDATE(),INTERVAL \''
-                        .(isset($_POST['dias']) ? $_POST['dias'] : '5').
-                    '\' DAY)';
-			}
-		  
-		  $results = Db::getInstance()->ExecuteS($query);
-		  echo Db::getInstance()->getMsgError();
+                            $prestashopTransactions[$n]['code'] = $transactionSummary->getCode();
+                            $prestashopTransactions[$n]['reference'] = $transactionSummary->getReference();
+                            $prestashopTransactions[$n++]['status'] = $transactionSummary->getStatus()->getValue();
+
+                    }
+
+        }
+
+        if (!isset($prestashopTransactions)) {
+            $prestashopTransactions = false;
+        }
+
+        return $prestashopTransactions;
+
+    }
+
+    /**
+    * 
+    * Grab a PAGSEGURO_ID and decrypts
+    * @param string $reference
+    */
+    private function decrypt($reference)
+    {
+
+            return substr($reference, 0, 5);
+
+    }
+
+    /**
+    * 
+    * Return PagSeguro ID
+    */
+    private function getToken()
+    {
+
+            $query = 'SELECT c.`name`, c.`value`
+                             FROM `'._DB_PREFIX_.'configuration` c
+                             WHERE c.`name` = "PAGSEGURO_ID"';
+
+            $result = Db::getInstance()->executeS($query);
+
+            return $result[0]['value'];
+
+    }
+
+        /**
+        * 
+        *  Return Prestashop payment list
+        * 
+        */
+    private function getPrestashopPaymentList()
+    {
+		if ($this->verifyVersion() === false) {
+
+                    $query = 'SELECT
+                        psord.`id_order`,
+                        psord.`date_add`,
+                        psord.`current_state`,
+                        osl.`name`,
+                        oh.`id_order_state`,
+                        (SELECT COUNT(od.`id_order`) FROM `ps_order_detail` od
+                                WHERE od.`id_order` = psord.`id_order`
+                                GROUP BY `id_order`) AS product_number
+
+                      FROM `'._DB_PREFIX_.'orders` AS psord
+                            LEFT JOIN `'._DB_PREFIX_.'order_history` oh
+                                ON (oh.`id_order` = psord.`id_order`)
+                            LEFT JOIN `'._DB_PREFIX_.'order_state` os
+                                ON (os.`id_order_state` = oh.`id_order_state`)
+                            LEFT JOIN `'._DB_PREFIX_.'order_state_lang` osl
+                                ON (os.`id_order_state` = osl.`id_order_state`)
+
+                     WHERE oh.`id_order_history` = (SELECT MAX(`id_order_history`) FROM `'._DB_PREFIX_.'order_history` moh
+                                                    WHERE moh.`id_order` = psord.`id_order`
+                                                    GROUP BY moh.`id_order`)                    
+                        AND psord.payment = "PagSeguro"
+                        AND osl.`id_lang` = psord.id_lang
+                        AND psord.date_add >= DATE_SUB(CURDATE(),INTERVAL \''
+                            .(isset($_POST['dias']) ? $_POST['dias'] : '5').
+                        '\' DAY)';
+
+                } else {
+
+                    $query = 'SELECT
+                        psord.`id_order`,
+                        psord.`date_add`,
+                        osl.`name`,
+                        oh.`id_order_state`,
+                        (SELECT COUNT(od.`id_order`) FROM `ps_order_detail` od
+                                WHERE od.`id_order` = psord.`id_order`
+                                GROUP BY `id_order`) AS product_number
+
+                      FROM `'._DB_PREFIX_.'orders` AS psord
+                            LEFT JOIN `'._DB_PREFIX_.'order_history` oh
+                                ON (oh.`id_order` = psord.`id_order`)
+                            LEFT JOIN `'._DB_PREFIX_.'order_state` os
+                                ON (os.`id_order_state` = oh.`id_order_state`)
+                            LEFT JOIN `'._DB_PREFIX_.'order_state_lang` osl
+                                ON (os.`id_order_state` = osl.`id_order_state`)
+
+                     WHERE oh.`id_order_history` = (SELECT MAX(`id_order_history`) FROM `'._DB_PREFIX_.'order_history` moh
+                                                    WHERE moh.`id_order` = psord.`id_order`
+                                                    GROUP BY moh.`id_order`)                    
+                        AND psord.payment = "PagSeguro"
+                        AND osl.`id_lang` = psord.id_lang
+                        AND psord.date_add >= DATE_SUB(CURDATE(),INTERVAL \''
+                            .(isset($_POST['dias']) ? $_POST['dias'] : '5').
+                        '\' DAY)';
+                    }
+
+                $results = Db::getInstance()->ExecuteS($query);
+                echo Db::getInstance()->getMsgError();
 
           return $results;
-		
-	}
-	
-	private function verifyVersion()
-	{
-		
-		if (version_compare(_PS_VERSION_, '1.5.0.5', '<')) {
-            $result = true;
-        } else {
-			$result = false;
-		}
-		
-		return $result;
-		
-	}
+
+    }
+
+    private function verifyVersion()
+    {
+
+            if (version_compare(_PS_VERSION_, '1.5.0.5', '<')) {
+                    $result = true;
+            } else {
+                    $result = false;
+            }
+
+            return $result;
+
+    }
 
     private function getPrestashopStatus($status)
     {
-    	
-    	
-    	$query = $this->getOrderStatusNameById($status);
-    	
-    	$results = Db::getInstance()->executeS($query);
-    	
-    	return $results[0]['name'];
-    	
+
+
+        $query = $this->getOrderStatusNameById($status);
+
+        $results = Db::getInstance()->executeS($query);
+
+        return $results[0]['name'];
+
     }
     
     public function getPestashopOrderStatusId($name)
     {
-    	
-    	$query = $this->getOrderStatusIdByName($name);  
-     	
-    	$results = Db::getInstance()->executeS($query);
-    	
-    	return $results[0]['id_order_state'];
-    	
+
+    	$query = $this->getOrderStatusIdByName($name);
+
+        $results = Db::getInstance()->executeS($query);
+
+        return $results[0]['id_order_state'];
+
     }
-    
+
     private function getOrderStatusNameById($id)
     {
-    	
-    	$query = 'SELECT osl.`id_order_state`, osl.`name`
+
+        $query = 'SELECT osl.`id_order_state`, osl.`name`
     			  FROM `'._DB_PREFIX_.'order_state_lang` osl
     			  WHERE osl.`id_order_state` = '.$id.'';
-    	
-    	return $query;
-    	
+
+        return $query;
+
     }
     
     
-	private function getOrderStatusIdByName($name)
+    private function getOrderStatusIdByName($name)
     {
-    	
-    	$query = 'SELECT osl.`id_order_state`, osl.`name`
-    			  FROM `'._DB_PREFIX_.'order_state_lang` osl
-    			  WHERE osl.`name` LIKE "'.$name.'"';
-    	
-    	return $query;
-    	
+
+        $query = 'SELECT osl.`id_order_state`, osl.`name`
+                          FROM `'._DB_PREFIX_.'order_state_lang` osl
+                          WHERE osl.`name` LIKE "'.$name.'"';
+
+        return $query;
+
     }
     
-	private function decryptId($reference)
-	{
-		
-		return substr($reference, 5);
-		
-	}
+    private function decryptId($reference)
+    {
+
+            return substr($reference, 5);
+
+    }
     
     private function createTables($id_order, $id_order_state, $status_pagseguro, $date_add, $name, $id_pagseguro, $row)
     {
-    	
-    	$id_order = sprintf("#%06s",   $id_order);
-		
-    	$this->tableResult .= " <tr class='tabela' id='" .$id_order."' style='color:".$this->getColor($id_order_state, $status_pagseguro)."'>";
-    	$this->tableResult .= "<td style='text-align: center;'>" .$date_add."</td>";
-    	$this->tableResult .= "<td style='text-align: center;'>" .$id_order."</td>";
-    	$this->tableResult .= "<td style='text-align: center;'>" .$id_pagseguro ."</td>";
-    	$this->tableResult .= "<td style='text-align: center;'>" .$name."</td>";
-    	$this->tableResult .= "<td style='text-align: center;'>". $status_pagseguro."</td>";
-    	$this->tableResult .= "<td id='editar'>
+
+    	$id_order = sprintf("#%06s", $id_order);
+
+        $this->tableResult .= " <tr class='tabela' id='" .$id_order."' style='color:"
+                .$this->getColor($id_order_state, $status_pagseguro)."'>";
+        $this->tableResult .= "<td style='text-align: center;'>" .$date_add."</td>";
+        $this->tableResult .= "<td style='text-align: center;'>" .$id_order."</td>";
+        $this->tableResult .= "<td style='text-align: center;'>" .$id_pagseguro ."</td>";
+        $this->tableResult .= "<td style='text-align: center;'>" .$name."</td>";
+        $this->tableResult .= "<td style='text-align: center;'>". $status_pagseguro."</td>";
+        $this->tableResult .= "<td id='editar'>
 			                        <a onclick='editRedirect(" . $id_order . ")'
 			                            id='" . $id_order . "' style='cursor:pointer'>
 			                        <img src='../img/admin/details.gif'
 			                            border='0' alt='edit' title='Editar'/>
 			                        </a>
 			                    </td>";
-    	$this->tableResult .= "<td id='duplicar'><a onclick='duplicateStatus(".$row['id_order'].",".$row['id_status_pagseguro'].",".$row['id_order_state'].")' style='cursor:pointer'> <img src='../img/admin/edit.gif'
-			                            border='0' alt='Modificar' title='Modificar'/> </a></td>";
-    	$this->tableResult .= "</tr>";
-    	
+        $this->tableResult .= "<td id='duplicar'><a onclick='duplicateStatus(".$row['id_order'].",".$row['id_status_pagseguro'].","
+                .$row['id_order_state'].")' style='cursor:pointer'> <img src='../img/admin/edit.gif' border='0' alt='Modificar' title='Modificar'/> </a></td>";
+        $this->tableResult .= "</tr>";
+
 
     }
 
@@ -443,7 +449,7 @@ class pagSeguroConciliation {
                 ";
     }
 
-    private function getPagSeguroState($pagSeguroState, $where = '') 
+    private function getPagSeguroState($pagSeguroState, $where = '')
     {
         $sql = 'SELECT distinct os.`id_order_state`
                         FROM `' . _DB_PREFIX_ . 'order_state` os
@@ -493,7 +499,7 @@ class pagSeguroConciliation {
     public function createLog($dados)
     {
 
-		/* Retrieving configurated default charset */
+        /* Retrieving configurated default charset */
         PagSeguroConfig::setApplicationCharset(Configuration::get('PAGSEGURO_CHARSET'));
         
         /* Retrieving configurated default log info */
@@ -501,7 +507,8 @@ class pagSeguroConciliation {
             PagSeguroConfig::activeLog(_PS_ROOT_DIR_ . Configuration::get('PAGSEGURO_LOG_FILELOCATION'));
         }
 
-        LogPagSeguro::info("PagSeguroConciliation.Register( 'Alteração de Status da compra '" . $dados['idOrder'] . "' para o Status '" . $dados['newStatus'] . "(" . $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end");
+        LogPagSeguro::info("PagSeguroConciliation.Register( 'Alteração de Status da compra '" . $dados['idOrder'] 
+                . "' para o Status '" . $dados['newStatus'] . "(" . $dados['newIdStatus'] . ")' - '" . date("d/m/Y H:i") . "') - end");
     }
     
         /**
@@ -513,30 +520,26 @@ class pagSeguroConciliation {
     public function updateStatus($id, $new_status)
     {
 
-		if ($this->verifyVersion() === false) {
+        if ($this->verifyVersion() === false) {
+            $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
+                             SET oh.`id_order_state` = '.$new_status.'
+                             WHERE oh.`id_order` = '.$id.'';
 
-                        $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
-					 SET oh.`id_order_state` = '.$new_status.'
-					 WHERE oh.`id_order` = '.$id.'';
-	 
-                        Db::getInstance()->executeS($query);
+            Db::getInstance()->executeS($query);
 
-                        $query = 'UPDATE `'._DB_PREFIX_.'orders` oh
-					 SET oh.`current_state` = '.$new_status.'
-					 WHERE oh.`id_order` = '.$id.'';
+            $query = 'UPDATE `'._DB_PREFIX_.'orders` oh
+                             SET oh.`current_state` = '.$new_status.'
+                             WHERE oh.`id_order` = '.$id.'';
 
-                        Db::getInstance()->executeS($query);
+            Db::getInstance()->executeS($query);
 
-                } else {
+        } else {
+            $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
+                             SET oh.`id_order_state` = '.$new_status.'
+                             WHERE oh.`id_order` = '.$id.'';
 
-
-                        $query = 'UPDATE `'._DB_PREFIX_.'order_history` oh
-					 SET oh.`id_order_state` = '.$new_status.'
-					 WHERE oh.`id_order` = '.$id.'';
-
-                        Db::getInstance()->executeS($query);
-
-                }
+            Db::getInstance()->executeS($query);
+        }
 
     }
 

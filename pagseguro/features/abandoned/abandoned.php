@@ -125,7 +125,7 @@ class PagSeguroAbandoned {
             $today = strtotime('today');
             $expiration = strtotime($params['data_expired']);
             
-            if ($expiration_date_quantity < $today) {
+            if ($expiration < $today) {
                 $isValidated = false;
             }
             
