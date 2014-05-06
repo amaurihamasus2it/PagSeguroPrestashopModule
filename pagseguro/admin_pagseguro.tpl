@@ -26,15 +26,14 @@
 
 <link type="text/css" rel="stylesheet" href="{$css_version}" />
 <script type="text/javascript" src="{$module_dir}assets/js/jquery.min.js"></script>
+<script type="text/javascript" src="{$module_dir}assets/js/jquery.blockUI.js"></script>
+<script type="text/javascript" src="{$module_dir}assets/js/pbTable.min.js"></script>
+
+{$hook_teste}
 
 <form class="psplugin" id="psplugin" action="{$action_post}" method="POST">
     <h1>
         <img src="{$module_dir}assets/images/logops_228x56.png" />
-        <span style="margin-left : 60px; width : 480px">
-        	<div>
-            {l s='Mais de 23 milhões de brasileiros já utilizam o PagSeguro. Faça parte você também!' mod='pagseguro'}
-        	</div>
-        </span>
         <span style="right : 0px">
             <a href="https://pagseguro.uol.com.br/registration/registration.jhtml?ep=5&tipo=cadastro#!vendedor" target="_blank" class="pagseguro-button green-theme normal">
                 {l s='Faça seu cadastro' mod='pagseguro'}
@@ -53,13 +52,16 @@
         </div>
     {/foreach}
     </div>
-    <p class="center"><button id="update" class="pagseguro-button green-theme normal" name="btnSubmit" />Atualizar</button></p>
+    <p class="center"><button id="update" class="pagseguro-button green-theme normal" name="btnSubmit" />Salvar</button></p>
+	<input type='hidden' id='menuTab' name='menuTab' value='menuTab1'>
 </form>
 <br>
 <script type="text/javascript">
     {literal}
         var url = location.href;  
         var baseURL = url.substring(0, url.indexOf('/', 18));
+        var paginaAtual = 0;
+		var menuTab = 'menuTab1';
 
         $('.menuTabButton').live('click',
             function () {
@@ -67,9 +69,12 @@
                 $(this).addClass('selected');
                 $('.tabItem.selected').removeClass('selected');
                 $('#' + this.id + 'Sheet').addClass('selected');
-
+				menuTab = this.id;
+                
+                $("input[name=menuTab]").val(menuTab);
                 hideInput(this.id);
         });
+
         
         function hideInput(menuTab) {
             if (menuTab == 'menuTab2') {
@@ -174,6 +179,7 @@
             if (numPages<=1) {
                 pager.find('.next_link').hide();
             }
+
           	pager.children().eq(1).addClass("active");
 
             children.hide();
@@ -181,6 +187,7 @@
 
             pager.find('li .page_link').click(function(){
                 var clickedPage = $(this).html().valueOf()-1;
+                paginaAtual = clickedPage;
                 goTo(clickedPage,perPage);
                 return false;
             });
@@ -196,13 +203,19 @@
             function previous(){
                 click(parseInt(pager.data("curr")) - 1);
                 var goToPage = parseInt(pager.data("curr")) - 1;
+                paginaAtual = goToPage;
                 goTo(goToPage);
             }
 
             function next(){
                 click(parseInt(pager.data("curr")) + 1);
                 goToPage = parseInt(pager.data("curr")) + 1;
+                paginaAtual = goToPage;
                 goTo(goToPage);
+            }
+
+            if(paginaAtual != 0) {
+                goTo(paginaAtual);
             }
             
             function goTo(page){
@@ -233,12 +246,86 @@
         };
         
         window.onload = function() {
+            paginacao();
+        };
+        
+        function paginacao(){
             $('table.gridConciliacao').pageMe({pagerSelector:'#myPager',showPrevNext:true});
-        };	
+        }
+        
+        function blockModal(block) {
+            if(block == 1) {
+                $.blockUI({
+                    message: '<h1>Carregando...</h1>',
+                    css: {
+                        border: 'none',
+                        padding: '15px',
+                        backgroundColor: '#4f7743',
+                        '-webkit-border-radius': '10px',
+                        '-moz-border-radius': '10px',
+                        opacity: 0.7,
+                        color: '#90e874'
+                    },
+                    overlayCSS: { backgroundColor: 'gray' }
+                });
+            } else {
+                setTimeout($.unblockUI, 1000);
+            }
+        }
+        
+        $("input[name = 'search']").live('click',
+            function() {
+                blockModal(1);
+                paginaAtual = 0;
+                reloadTable();
+        });
+
+        function reloadTable() {
+            $.ajax({
+                    type: 'POST',
+                    url: '../modules/pagseguro/features/conciliation/conciliation.php',
+                    dataType : "json",
+                    data: {dias: $('#pagseguro_dias').val()},
+                    success: function(result) {
+                        $('#resultTable').empty();
+                        $('#resultTable').append(result.tabela);
+                        $('#myPager').empty();
+                        
+                        paginacao();
+                        
+                        blockModal(0);
+                    },
+                    error: function() {
+                        blockModal(0);
+                    }
+                });
+        }
         
         function editRedirect(rowId){
-            var token = adminToken.value;
-            window.location.href = baseURL + '/admin-loja/index.php?tab=AdminOrders&id_order='+rowId+'&vieworder&token='+token;
+            var token = $('#adminToken').val();
+            var url = $('#urlAdminOrder').val();
+
+            window.open(url + '&id_order='+rowId+'&vieworder&token='+token);
+            
+        }
+        
+        function duplicateStatus(rowId,rowIdStatusPagSeg,rowIdStatusPreShop){
+
+            if(rowIdStatusPagSeg != rowIdStatusPreShop && rowIdStatusPagSeg != ""){
+                blockModal(1);
+                $.ajax({
+                    type: 'POST',
+                    url: '../modules/pagseguro/features/conciliation/conciliation.php',
+                    data: {idOrder: rowId, newIdStatus: rowIdStatusPagSeg },
+                    success: function(result) {
+                        reloadTable();
+                    },
+                    error: function() {
+                        blockModal(0);
+                        alert('Não foi possível corrigir o Status.\nTente novamente');
+                    }
+                });
+            }
         }
 
 		$('#pagseguro_checkout').live('change',

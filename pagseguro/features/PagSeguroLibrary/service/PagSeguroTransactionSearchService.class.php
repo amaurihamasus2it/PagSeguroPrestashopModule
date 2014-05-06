@@ -274,7 +274,10 @@ class PagSeguroTransactionSearchService
             );
 
             $httpStatus = new PagSeguroHttpStatus($connection->getStatus());
-
+			
+			var_dump($connection->getResponse());
+			die('teste');
+			
             switch ($httpStatus->getType()) {
 
                 case 'OK':

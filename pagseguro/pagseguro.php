@@ -27,6 +27,7 @@
 
 include_once dirname(__FILE__) . '/features/PagSeguroLibrary/PagSeguroLibrary.php';
 include_once dirname(__FILE__) . '/features/modules/pagsegurofactoryinstallmodule.php';
+include_once dirname(__FILE__) . '/features/util/encryptionIdPagSeguro.php';
 
 if (! defined('_PS_VERSION_')) {
     exit();
@@ -34,7 +35,6 @@ if (! defined('_PS_VERSION_')) {
 
 class PagSeguro extends PaymentModule
 {
-
     private $modulo;
 
     protected $errors = array();
@@ -42,12 +42,14 @@ class PagSeguro extends PaymentModule
     private $html;
 
     public $context;
+	
+	private $menuTab = 'menuTab1';
 
     public function __construct()
     {
         $this->name = 'pagseguro';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7';
+        $this->version = '1.8';
         $this->author = 'PagSeguro Internet LTDA.';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
@@ -74,6 +76,14 @@ class PagSeguro extends PaymentModule
             }
         }
         
+        if(! $this->validatePagSeguroId()) {
+            return  false;
+        }
+        
+    	if(! $this->validateOrderMessage()) {
+            return false;
+        } 
+        
         if (! $this->generatePagSeguroOrderStatus()) {
             return false;
         }
@@ -86,7 +96,8 @@ class PagSeguro extends PaymentModule
             return false;
         }
         
-        if (! parent::install() or ! $this->registerHook('payment') or
+        if (! parent::install() or 
+            ! $this->registerHook('payment') or
             ! $this->registerHook('paymentReturn') or
             ! Configuration::updateValue('PAGSEGURO_EMAIL', '') or
             ! Configuration::updateValue('PAGSEGURO_TOKEN', '') or
@@ -95,7 +106,7 @@ class PagSeguro extends PaymentModule
             ! Configuration::updateValue('PAGSEGURO_CHARSET', PagSeguroConfig::getData('application', 'charset')) or
             ! Configuration::updateValue('PAGSEGURO_LOG_ACTIVE', PagSeguroConfig::getData('log', 'active')) or
             ! Configuration::updateValue('PAGSEGURO_RECOVERY_ACTIVE', false) or
-            ! Configuration::updateValue('PAGSEGURO_DAYS_RECOVERY', '') or
+            ! Configuration::updateValue('PAGSEGURO_DAYS_RECOVERY', 1) or
             ! Configuration::updateValue('PAGSEGURO_CHECKOUT', false) or
             ! Configuration::updateValue(
                 'PAGSEGURO_LOG_FILELOCATION',
@@ -153,96 +164,116 @@ class PagSeguro extends PaymentModule
     
     private function getConfigurationTabHtml()
     {
+        global $smarty;
+        
+        $smarty->assign('titulo', $this->l('Configuração'));
+
         $charset = Util::getCharsetOptions();
-        $optionCharset = "";
-        $selection = array_search(
-            Configuration::get('PAGSEGURO_CHARSET'),
-            Util::getCharsetOptions()
-        );
-    
-        foreach ($charset as $key => $value){
-            if ($key == $selection) {
-                $optionCharset .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
-            } else {
-                $optionCharset .= "<option value='" . $key . "'>" . $value . "</option>";
-            }
-        }
-    
+        $selection = array_search(Configuration::get('PAGSEGURO_CHARSET'), $charset);
+
+        $smarty->assign('keychartset', array_keys($charset));
+        $smarty->assign('valueschartset', array_values($charset));
+        $smarty->assign('escolhacharset', $selection);
+
         $checkout = Util::getTypeCheckout();
-        $optionCheckout = "";
-        $selection = Configuration::get('PAGSEGURO_CHECKOUT');
-    
-        foreach ($checkout as $key => $value){
-            if ($key == $selection) {
-                $optionCheckout .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
-            } else {
-                $optionCheckout .= "<option value='" . $key . "'>" . $value . "</option>";
-            }
-        }
-        $conteudo = '';
-        $conteudo .= include(dirname(__FILE__) . '\menu\configuracoes.phtml');
-        return $conteudo;
+
+        $smarty->assign('keycheckout', array_keys($checkout));
+        $smarty->assign('valuescheckout', array_values($checkout));
+        $smarty->assign('escolhacheckout', Configuration::get('PAGSEGURO_CHECKOUT'));
+
+        $smarty->assign('email', Tools::safeOutput(Configuration::get('PAGSEGURO_EMAIL')));
+        $smarty->assign('token', Tools::safeOutput(Configuration::get('PAGSEGURO_TOKEN')));
+
+        return $this->display(__PS_BASE_URI__ . 'modules/pagseguro', '/views/templates/menu/settings.tpl');
     
     }
     
     private function getExtrasTabHtml()
     {
+        global $smarty;
+
+        $smarty->assign('titulo', $this->l('Extras'));
+        
         $active = Util::getActive();
-        $optionLog = "";
-        $selection = Configuration::get('PAGSEGURO_LOG_ACTIVE');
-    
-        foreach ($active as $key => $value){
-            if ($key == $selection) {
-                $optionLog .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
-            } else {
-                $optionLog .= "<option value='" . $key . "'>" . $value . "</option>";
-            }
-        }
-    
-        $optionRecovery = "";
-        $selection = Configuration::get('PAGSEGURO_RECOVERY_ACTIVE');
-    
-        foreach ($active as $key => $value){
-            if ($key == $selection) {
-                $optionRecovery .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
-            } else {
-                $optionRecovery .= "<option value='" . $key . "'>" . $value . "</option>";
-            }
-        }
-    
-        $validLink = "";
-        $selection = Tools::safeOutput(Configuration::get('PAGSEGURO_DAYS_RECOVERY'));
-    
-        foreach (Util::getDaysRecovery() as  $key => $value) {
-            if ($key == $selection) {
-                $validLink .= "<option value='" . $key . "' selected='selected' >" . $value . "</option>";
-            } else {
-                $validLink .= "<option value='" . $key . "'>" . $value . "</option>";
-            }
-        }
-    
-        $conteudo = "";
-        $conteudo .= include(dirname(__FILE__) . '\menu\extras.phtml');
-        return $conteudo;
+
+        $smarty->assign('keylogactive', array_keys($active));
+        $smarty->assign('valueslogactive', array_values($active));
+        $smarty->assign('escolhalogactive', Configuration::get('PAGSEGURO_LOG_ACTIVE'));    
+
+        $smarty->assign('keyrecoveryactive', array_keys($active));
+        $smarty->assign('valuesrecoveryactive', array_values($active));
+        $smarty->assign('escolharecoveryactive', Configuration::get('PAGSEGURO_RECOVERY_ACTIVE'));
+
+        $days_to_recovery = Util::getDaysRecovery();
+
+        $smarty->assign('keydaystorecovery', array_keys($days_to_recovery));
+        $smarty->assign('valuesdaystorecovery', array_values($days_to_recovery));
+        $smarty->assign('escolhadaystorecovery', Tools::safeOutput(Configuration::get('PAGSEGURO_DAYS_RECOVERY')));
+
+        $smarty->assign('urlNotification', $this->getNotificationUrl());
+        $smarty->assign('urlRedirection', $this->getDefaultRedirectionUrl());
+        $smarty->assign('fileLocation', Tools::safeOutput(Configuration::get('PAGSEGURO_LOG_FILELOCATION')));
+
+        return $this->display(__PS_BASE_URI__ . 'modules/pagseguro', '/views/templates/menu/extras.tpl');
     }
     
     private function getConciliationTabHtml()
     {
+	
+        global $smarty;
+        
         $dias = "";
         $image = '../modules/pagseguro/assets/images/';
-         
+        
         foreach (Util::getDaysSearch() as $value ) {
             $dias .= "<option value='" . $value . "'>" . $value . "</option>";
         }
-    
+        
+        $adminToken = Tools::getAdminTokenLite('AdminOrders');
+		
+        $tableResult = include_once(dirname(__FILE__) . '\features\conciliation\conciliation.php');
+		
+        $smarty->assign('dias', $dias);
+        $smarty->assign('urlAdminOrder', $_SERVER['SCRIPT_NAME'].'?tab=AdminOrders');
+        $smarty->assign('adminToken', $adminToken);
+        $smarty->assign('tableResult', $tableResult['tabela']);
+        $smarty->assign('titulo', $this->l('Conciliação'));
+        $smarty->assign('errorMsg', $tableResult['errorMsg']);
+        $smarty->assign('regError', $tableResult['regError']);
+
         $conteudo = "";
-        $conteudo .= include(dirname(__FILE__) . '\menu\conciliacao.phtml');
+        $conteudo = $this->display(__PS_BASE_URI__ . 'modules/pagseguro', '/views/templates/conciliation/conciliation.tpl');
+        
         return $conteudo;
+    
+    }
+
+    public function getAbandonedTabHtml()
+    {
+        global $smarty;
+
+        $adminToken = Tools::getAdminTokenLite('AdminOrders');
+    
+        $tableResult = include_once(dirname(__FILE__) . '\features\abandoned\abandoned.php');
+
+        $smarty->assign('urlAdminOrder', $_SERVER['SCRIPT_NAME'].'?tab=AdminOrders');
+        $smarty->assign('adminToken', $adminToken);
+        $smarty->assign('tableResult', $tableResult['table']);
+        $smarty->assign('titulo', $this->l('Abandonadas'));
+        $smarty->assign('errorMsg', $tableResult['errorMsg']);
+    
+        $content = "";
+        $content = $this->display(__PS_BASE_URI__ . 'modules/pagseguro', '/views/templates/menu/abandoned.tpl');
+        return $content;
     
     }
     
     private function getRequirementsTabHtml()
     {
+        global $smarty;
+
+        $smarty->assign('titulo', $this->l('Requisitos'));
+        
         $image = '../modules/pagseguro/assets/images/';
         $error = array();
     
@@ -264,19 +295,26 @@ class PagSeguro extends PaymentModule
             $error['moeda'][1] = $this->missedCurrencyMessage();
         } else {
             $error['moeda'][0] = $image.'ok.png';
-            $error['moeda'][1] = null;
+            $error['moeda'][1] = "Moeda REAL instalada.";
         }
-    
+
+        $error['curl'][1] = (is_null($error['curl'][1]) ? "Biblioteca cURL instalada." : $error['curl'][1]);
+        $error['dom'][1] = (is_null($error['dom'][1]) ? "DOM XML instalado." : $error['dom'][1]);
+        $error['spl'][1] = (is_null($error['spl'][1]) ? "Biblioteca padrão do PHP(SPL) instalada." : $error['spl'][1]);
+        $error['version'][1] = (is_null($error['version'][1]) ? "Versão do PHP superior à 5.1.6." : $error['version'][1]);
+
+        $smarty->assign('error', $error);
+
         $conteudo = "";
-        $conteudo .= include(dirname(__FILE__) . '\menu\requerimentos.phtml');
-        return $conteudo;
+        return $this->display(__PS_BASE_URI__ . 'modules/pagseguro', '/views/templates/menu/requirements.tpl');
     
     }
     
     private function displayForm()
     {
         global $smarty;
-    
+
+        $smarty->assign('hook_teste', Module::hookExec('RecoveryCartAbandoned'));                                
         $smarty->assign('module_dir', _PS_MODULE_DIR_ . 'pagseguro/');
         $smarty->assign('action_post', Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']));
         $smarty->assign('email_user', Tools::safeOutput(Configuration::get('PAGSEGURO_EMAIL')));
@@ -306,26 +344,37 @@ class PagSeguro extends PaymentModule
                 'config' => array(
                     'title' => $this->l('Configuração'),
                     'content' => $this->getConfigurationTabHtml(),
+                    'icon' => '',
                     'tab' => 1,
-                    'selected' => true,
+                    'selected' => ($this->menuTab == 'menuTab1') ? true : false,
                 ),
                 'extras' => array(
                     'title' => $this->l('Extras'),
                     'content' => $this->getExtrasTabHtml(),
+                    'icon' => '',
                     'tab' => 2,
-                    'selected' => false,
+                    'selected' => ($this->menuTab == 'menuTab2') ? true : false,
                 ),
                 'conciliation' => array(
                     'title' => $this->l('Conciliação'),
                     'content' => $this->getConciliationTabHtml(),
+                    'icon' => '',
                     'tab' => 3,
-                    'selected' => false,
+                    'selected' => ($this->menuTab == 'menuTab3') ? true : false,
+                ),
+                'abandoned' => array(
+                    'title' => $this->l('Abandonadas'),
+                    'content' => $this->getAbandonedTabHtml(),
+                    'icon' => '',
+                    'tab' => 4,
+                    'selected' => ($this->menuTab == 'menuTab4') ? true : false,
                 ),
                 'requirements' => array(
                     'title' => $this->l('Requisitos'),
                     'content' => $this->getRequirementsTabHtml(),
-                    'tab' => 4,
-                    'selected' => false,
+                    'icon' => '',
+                    'tab' => 5,
+                    'selected' => ($this->menuTab == 'menuTab5') ? true : false,
                 ),
             )
         ));
@@ -341,6 +390,7 @@ class PagSeguro extends PaymentModule
     {
         if (Tools::isSubmit('btnSubmit')) {
             
+			$this->menuTab = Tools::getValue('menuTab');
             $email = Tools::getValue('pagseguro_email');
             $token = Tools::getValue('pagseguro_token');
             $pagseguro_url_redirect = Tools::getValue('pagseguro_url_redirect');
@@ -405,21 +455,17 @@ class PagSeguro extends PaymentModule
             Configuration::updateValue('PAGSEGURO_LOG_ACTIVE', Tools::getValue('pagseguro_log'));
             Configuration::updateValue('PAGSEGURO_CHECKOUT', Tools::getValue('pagseguro_checkout'));
             Configuration::updateValue('PAGSEGURO_LOG_FILELOCATION', Tools::getValue('pagseguro_log_dir'));
-            
+            Configuration::updateValue('PAGSEGURO_RECOVERY_ACTIVE', Tools::getValue('pagseguro_recovery'));
+            Configuration::updateValue('PAGSEGURO_DAYS_RECOVERY', Tools::getValue('pagseguro_days_recovery'));
+
             /* Verify if log file exists, case not try create */
             if (Tools::getValue('pagseguro_log')) {
                 $this->verifyLogFile(Tools::getValue('pagseguro_log_dir'));
             }
         }
-        $this->html .= '<div class="module_confirmation conf confirm" '.$this->getWidthVersion(_PS_VERSION_).' ">'
+        $this->html .= '<div class="module_confirmation conf confirm" '.Util::getWidthVersion(_PS_VERSION_).' ">'
             . $this->l('Dados atualizados com sucesso') . '</div>';
     }
-    
-    private function getWidthVersion($module_version)
-    {
-        return version_compare($module_version, '1.5', '<') ? 'style="width: 896px;' : 'style="width: 935px;';
-    }
-    
 
     private function errorMessage($field)
     {
@@ -523,6 +569,32 @@ class PagSeguro extends PaymentModule
             return false;
         }
         return true;
+    }
+    
+    private function validatePagSeguroId()
+    {
+        $id = Configuration::get('PAGSEGURO_ID');
+        if (empty($id)) {
+            $id = EncryptionIdPagSeguro::idRandomGenerator();
+            return Configuration::updateValue('PAGSEGURO_ID', $id);
+        }
+        return true;
+    }
+    
+	private function validateOrderMessage()
+    {
+        $orderMensagem = new OrderMessage();
+        
+        foreach (Language::getLanguages(false) as $language) {
+            $orderMensagem->name[(int) $language['id_lang']] = "cart recovery pagseguro";
+            $orderMensagem->message[(int) $language['id_lang']] = 
+                "Verificamos que você não concluiu sua compra. Clique no link abaixo para dar prosseguimento.";                
+        }
+
+        $orderMensagem->date_add = date('now');
+        $orderMensagem->save();
+
+        return Configuration::updateValue('PAGSEGURO_MESSAGE_ORDER_ID', $orderMensagem->id);;
     }
 
     private function generatePagSeguroOrderStatus()
