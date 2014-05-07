@@ -26,7 +26,7 @@ switch ($ajaxRequest) {
         $template = '';
         $message = '';
         foreach ($orderMessage as $key => $value) {
-            if  (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
+            if (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
                 $template = $value['name'];
                 $message = $value['message'];
             }
@@ -34,8 +34,8 @@ switch ($ajaxRequest) {
 
         $params = array(
             '{message}' =>  $message,
-            '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recoveryCode
-            .'" target="_blank"> click aqui para continuar sua compra </a>'
+            '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r='.$recoveryCode
+            .'" target="_blank"> Clique aqui para continuar sua compra </a>'
         );
 
         $isSend = @Mail::Send(
@@ -63,27 +63,28 @@ switch ($ajaxRequest) {
         break;
     case 'multiemails':
     
-        $testeteste = Tools::getValue('send_emails');
+        $emails = Tools::getValue('send_emails');
         
-        foreach ($testeteste as $key => $value) {
-            parse_str($value);
+		$orderMessage = OrderMessage::getOrderMessages($idLang);
+		$template = '';
+		$message = '';
+		foreach ($orderMessage as $key => $value) {
+			if (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
+				$template = $value['name'];
+				$message = $value['message'];
+			}
+		}
+		
+        foreach ($emails as $key => $value) {
+
+			parse_str($value);
             
             $customer = new Customer((int)($customer));
-            
-            $orderMessage = OrderMessage::getOrderMessages($idLang);
-            $template = '';
-            $message = '';
-            foreach ($orderMessage as $key => $value) {
-                if (strcmp($value["id_order_message"], Configuration::get('PAGSEGURO_MESSAGE_ORDER_ID')) == 0) {
-                    $template = $value['name'];
-                    $message = $value['message'];
-                }
-            }
-    
+
             $params = array(
                 '{message}' =>  $message,
-                '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r="'.$recovery
-                .'" target="_blank"> click aqui para continuar sua compra </a>'
+                '{link}' => '<a href="https://pagseguro.uol.com.br/checkout/v2/resume.html?r='.$recovery
+                .'" target="_blank"> Clique aqui para continuar sua compra </a>'
             );
     
             $isSend = @Mail::Send(
@@ -92,7 +93,7 @@ switch ($ajaxRequest) {
                 $template,
                 $params,
                 $customer->email,
-            	$customer->firstname.' '.$customer->lastname,
+                $customer->firstname.' '.$customer->lastname,
                 null,
                 null,
                 null,
@@ -107,9 +108,10 @@ switch ($ajaxRequest) {
                 die();
             }
         }
-
-        echo '<div class="module_confirmation conf confirm" '.Util::getWidthVersion(_PS_VERSION_).' ">'
-            . $pagseguro->l('Emails enviados com sucesso') . '</div>';
+		
+		echo json_encode(array('divError' => '<div class="module_confirmation conf confirm" '.Util::getWidthVersion(_PS_VERSION_).' ">'
+                . $pagseguro->l('Emails enviados com sucesso') . '</div>', 'divContent' => $pagseguro->getAbandonedTabHtml()));
+		
         break;
     case 'searchtable':
         echo $pagseguro->getAbandonedTabHtml();

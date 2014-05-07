@@ -58,7 +58,7 @@ class PagSeguroAbandoned
             if (!$this->errorMsg) {
             
                 $listOfAbandoned = $this->getAbandoned();
-    
+
                 if (is_array($listOfAbandoned->getTransactions())) {
                     
                     foreach ($listOfAbandoned->getTransactions() as $key => $value) {
@@ -76,10 +76,10 @@ class PagSeguroAbandoned
                         
                         $params['reference'] = $value->getReference();
                         $params['data_expired'] = $expiration_date;
-    
+
                         if ($this->validateOrderAbandoned($params)) {
-    
-                                $helper['data_expired'] = $expiration_date;
+
+								$helper['data_expired'] = $expiration_date;
     
                                 $reference = ((int)EncryptionIdPagSeguro::decrypt($value->getReference()));
                                 $helper['reference'] = $reference;
@@ -129,14 +129,7 @@ class PagSeguroAbandoned
         
         if (strpos($params['reference'], Configuration::get('PAGSEGURO_ID')) !== false) {
 
-            $today = strtotime('today');
-            $expiration = strtotime($params['data_expired']);
-            
-            if ($expiration > $today) {
-                $isValidated = false;
-            }
-            
-            $initiated = Util::getStatusCMS(0);
+			$initiated = Util::getStatusCMS(0);
             $order_state = OrderHistory::getLastOrderState(((int)EncryptionIdPagSeguro::decrypt($params['reference'])));
             if (strcmp($order_state->name, $initiated) != 0) {
                 $isValidated = false;
@@ -148,8 +141,6 @@ class PagSeguroAbandoned
         
         return $isValidated;
     }
-
-
 
     private function setObjCredential()
     {

@@ -16,22 +16,22 @@
             {/foreach}
         {else}
         <a href="javascript:void(0)" class="pagseguro-button green-theme normal" id="search_abandoned_button">{l s='Pesquisar'}</a>
-        <a href="javascript:void(0)" class="pagseguro-button green-theme normal" id="send_email_button">{l s='Enviar por demanda'}</a>
+        <a href="javascript:void(0)" class="pagseguro-button green-theme normal" id="send_email_button">{l s='Envio em massa'}</a>
         
             <table class='gridConciliacao' width='100%' id="my_table_abandoned_orders">
                 <thead>
                     <tr>
                         <th></th>
-                        <th>Data Criação do Pedido</th>
-                        <th>Id ordem prestashop</th>
-                        <th>Data validade do link</th>
-                        <th>Enviar email</th>
-                        <th></th>
+                        <th>Data do Pedido</th>
+                        <th>ID Prestashop</th>
+                        <th>Validade do link</th>
+                        <th>Enviar e-mail</th>
+                        <th>Visualizar</th>
                     </tr>
                 </thead>
                 <tfoot> 
                     <tr> 
-                      <th colspan="6">Validade dos link para envio de email:  {$day_recovery_teste} dias</th> 
+                      <th colspan="6">Validade do(s) link(s) para envio de e-mail:  {$day_recovery_teste} dias</th> 
                     </tr> 
                 </tfoot>
                 <tbody>
@@ -42,8 +42,8 @@
                                 <td align="center" class="bold">{$value_order.data_add_cart|date_format:"%d/%m/%Y"}</td>
                                 <td align="center" class="bold">{l s='#'}{$value_order.reference|string_format:"%06d"}</td>
                                 <td align="center" class="bold">{$value_order.data_expired}</td>
-                                <td align="center"> <a href="javascript:void(0)" onclick="javascript:meutesteajax('customer={$value_order.customer}&reference={$value_order.reference}&recovery={$value_order.recovery_code}');"> <img src="../img/admin/email.gif" title="{l s='enviar email'}"/> </a> </td>
-                                <td align="center"><a href="?tab=AdminOrders&id_order={$value_order.reference}&vieworder&token={$adminToken}"><img src="../img/admin/details.gif" title="{l s='visualizar ordem'}"/></a></td> </tr>
+                                <td align="center"> <a href="javascript:void(0)" onclick="javascript:sendSingleEmail('customer={$value_order.customer}&reference={$value_order.reference}&recovery={$value_order.recovery_code}');"> <img src="../img/admin/email.gif" title="{l s='enviar email'}"/> </a> </td>
+                                <td align="center"><a href="?tab=AdminOrders&id_order={$value_order.reference}&vieworder&token={$adminToken}" target="_blank"><img src="../img/admin/details.gif" title="{l s='visualizar ordem'}"/></a></td> </tr>
                             </tr>
                          {/foreach}
                 	{else}
@@ -64,24 +64,31 @@
 <script type="text/javascript">
 
     $('#send_email_button').click(function () {
-        blockModal(1);
 
-        var checkboxValues = new Array();
+		var checkboxValues = new Array();
         $('input[name="send_emails[]"]:checked').each(function() {
         	checkboxValues.push($(this).val());
         });
-
-        $.ajax({
-            type: "GET",
-            url: '{$base_dir}modules/pagseguro/features/abandoned/ajax-abandoned.php',
-            data: 'action=multiemails&'+$('input[name="send_emails[]"]').serialize(),
-            success: function(response) {
-                blockModal(0);
-                $( "table:first" )
-                    .next()
-                    .after(response);
-            }
-        });
+		
+		if(!checkboxValues.length == 0) {
+		
+			blockModal(1);
+		
+			$.ajax({
+				type: "GET",
+				url: '../modules/pagseguro/features/abandoned/ajax-abandoned.php',
+				data: 'action=multiemails&'+$('input[name="send_emails[]"]').serialize(),
+				dataType: 'json',
+				success: function(response) {
+					blockModal(0);
+					$("table:first").next().after(response.divError);
+					$('#menuTab4Sheet').empty();
+					$('#menuTab4Sheet').append(response.divContent);
+				}
+			});
+		} else {
+			$("table:first").next().after('<div class="module_error alert error" style="width: 896px"> Selecione pelo menos um email </div>');
+		}
         return false;
     });
 
@@ -89,7 +96,7 @@
         blockModal(1);        
         $.ajax({
             type: "GET",
-            url: '{$base_dir}modules/pagseguro/features/abandoned/ajax-abandoned.php',
+            url: '../modules/pagseguro/features/abandoned/ajax-abandoned.php',
             dataType : "html",
             data: 'action=searchtable',
             success: function(response) {
@@ -101,11 +108,11 @@
         return false;
     });
 
-    function meutesteajax(content) {
+    function sendSingleEmail(content) {
         blockModal(1);        
         $.ajax({
             type: "GET",
-            url: '{$base_dir}modules/pagseguro/features/abandoned/ajax-abandoned.php',
+            url: '../modules/pagseguro/features/abandoned/ajax-abandoned.php',
             data: 'action=singleemail&'+content,
             success: function(response) {
                 blockModal(0);

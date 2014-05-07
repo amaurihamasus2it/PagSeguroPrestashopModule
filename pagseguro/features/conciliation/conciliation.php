@@ -162,9 +162,14 @@ class PagSeguroConciliation
 
         $pageNumber = 1;
         $maxPageResults = 20;
-
+		
+		$timeZone = date_default_timezone_get ();
+		date_default_timezone_set ('America/Sao_Paulo');
+		
         $finalDate = date("Y-m-d")."T".date("H:i");
 
+		date_default_timezone_set($timeZone);
+		
         if ($this->daysRange == 0) {
 
                 $initialDate = $this->subDayIntoDate($finalDate, 0);
@@ -402,7 +407,9 @@ class PagSeguroConciliation
     private function createTables($id_order, $id_order_state, $status_pagseguro, $date_add, $name, $id_pagseguro, $row)
     {
 
-        $id_order = sprintf("#%06s", $id_order);
+
+    	$cOrder = $id_order;
+    	$id_order = sprintf("#%06s", $id_order);
 
         $this->tableResult .= " <tr class='tabela' id='" .$id_order."' style='color:"
                 .$this->getColor($id_order_state, $status_pagseguro)."'>";
@@ -412,7 +419,7 @@ class PagSeguroConciliation
         $this->tableResult .= "<td style='text-align: center;'>" .$name."</td>";
         $this->tableResult .= "<td style='text-align: center;'>". $status_pagseguro."</td>";
         $this->tableResult .= "<td id='editar'>
-			                        <a onclick='editRedirect(" . $id_order . ")'
+			                        <a onclick='editRedirect(" . $cOrder . ")'
 			                            id='" . $id_order . "' style='cursor:pointer'>
 			                        <img src='../img/admin/details.gif'
 			                            border='0' alt='edit' title='Editar'/>
@@ -583,10 +590,5 @@ class PagSeguroConciliation
 
             return $data;
 
-    }
-
-    public function dead()
-    {
-            die("I'm a dead man");
     }
 }
