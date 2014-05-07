@@ -28,11 +28,13 @@ include_once dirname(__FILE__).'/../../../../config/config.inc.php';
 
 class EncryptionIdPagSeguro
 {
-    public static function idRandomGenerator() {
+    public static function idRandomGenerator() 
+    {
         $str = 'abcdefghijkmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     
-        for ($i = 0, $idGenerated = ''; $i < 5; $i++)
-            $idGenerated .= Tools::substr($str, mt_rand(0, Tools::strlen($str) - 1), 1);
+        for ($i = 0, $idGenerated = ''; $i < 5; $i++) {
+                $idGenerated .= Tools::substr($str, mt_rand(0, Tools::strlen($str) - 1), 1);
+        }
             return $idGenerated;
     }
     

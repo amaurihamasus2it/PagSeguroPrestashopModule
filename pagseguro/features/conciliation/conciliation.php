@@ -162,14 +162,14 @@ class PagSeguroConciliation
 
         $pageNumber = 1;
         $maxPageResults = 20;
-		
-		$timeZone = date_default_timezone_get ();
-		date_default_timezone_set ('America/Sao_Paulo');
-		
+
+        $timeZone = date_default_timezone_get ();
+        date_default_timezone_set ('America/Sao_Paulo');
+
         $finalDate = date("Y-m-d")."T".date("H:i");
 
-		date_default_timezone_set($timeZone);
-		
+        date_default_timezone_set($timeZone);
+
         if ($this->daysRange == 0) {
 
                 $initialDate = $this->subDayIntoDate($finalDate, 0);
@@ -408,8 +408,8 @@ class PagSeguroConciliation
     {
 
 
-    	$cOrder = $id_order;
-    	$id_order = sprintf("#%06s", $id_order);
+        $cOrder = $id_order;
+        $id_order = sprintf("#%06s", $id_order);
 
         $this->tableResult .= " <tr class='tabela' id='" .$id_order."' style='color:"
                 .$this->getColor($id_order_state, $status_pagseguro)."'>";

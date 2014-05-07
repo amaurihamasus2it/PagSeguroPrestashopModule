@@ -364,7 +364,7 @@ class Util
         }
     }
     
-    public static function createAddOrderHistory($idOrder,$status)
+    public static function createAddOrderHistory($idOrder, $status)
     {
         $order_history = new OrderHistory();
         $order_history->id_order = $idOrder;

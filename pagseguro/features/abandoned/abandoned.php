@@ -79,7 +79,7 @@ class PagSeguroAbandoned
 
                         if ($this->validateOrderAbandoned($params)) {
 
-								$helper['data_expired'] = $expiration_date;
+                                $helper['data_expired'] = $expiration_date;
     
                                 $reference = ((int)EncryptionIdPagSeguro::decrypt($value->getReference()));
                                 $helper['reference'] = $reference;
@@ -129,7 +129,7 @@ class PagSeguroAbandoned
         
         if (strpos($params['reference'], Configuration::get('PAGSEGURO_ID')) !== false) {
 
-			$initiated = Util::getStatusCMS(0);
+            $initiated = Util::getStatusCMS(0);
             $order_state = OrderHistory::getLastOrderState(((int)EncryptionIdPagSeguro::decrypt($params['reference'])));
             if (strcmp($order_state->name, $initiated) != 0) {
                 $isValidated = false;
