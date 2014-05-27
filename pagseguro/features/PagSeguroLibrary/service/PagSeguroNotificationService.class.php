@@ -103,15 +103,9 @@ class PagSeguroNotificationService
             return isset($transaction) ? $transaction : null;
 
         } catch (PagSeguroServiceException $e) {
-            var_dump($e);
-            echo '<br>';
-            die('dentro PagSeguroServiceException');
             throw $e;
         }
         catch (Exception $e) {
-            var_dump($e);
-            echo '<br>';
-            die('dentro Exception');
             LogPagSeguro::error("Exception: " . $e->getMessage());
             throw $e;
         }

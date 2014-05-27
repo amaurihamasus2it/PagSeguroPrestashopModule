@@ -42,24 +42,29 @@ class PagSeguroNotificationOrderPrestashop
 
     private $reference;
 
-    public function postProcess($_POST)
+    public function postProcess($post)
     {
-        $caminho = _PS_ROOT_DIR_ . '/error/log.txt';
-        $arquivo = fopen($caminho, 'a');
-        fwrite($arquivo, serialize($_POST));
-        fclose($arquivo);
         
-        $this->createNotification($_POST);
-        $this->createCredential();
-        $this->inicializeObjects();
+        try {
 
-        if ($this->obj_notification_type->getValue() == $this->notification_type) {
-            $this->createTransaction();
-        }
+            $this->createNotification($post);
+            $this->createCredential();
+            $this->inicializeObjects();        
 
-        if ($this->obj_transaction) {
-            $this->updateCms();
+            if ($this->obj_notification_type->getValue() == $this->notification_type) {
+                $this->createTransaction();
+            }
+
+            if ($this->obj_transaction) {
+                $this->updateCms();
+            }
+            
+        } catch (Exception $e) {
+
+            $this->createLog($e->getMessage());
         }
+        
+        
     }
 
     private function createNotification(Array $post)
@@ -68,11 +73,7 @@ class PagSeguroNotificationOrderPrestashop
             trim($post['notificationType']) : null);
 
         $this->notification_code = (isset($post['notificationCode']) && trim($post['notificationCode']) !== '' ?
-            trim($post['notificationCode']) : null);
-        
-//         $this->notification_type = 'transaction';
-//         $this->notification_code = '2C982B-2AAB71AB71DC-0EE45E2F846A-603097';
-        
+            trim($post['notificationCode']) : null);  
     }
 
     private function createCredential()
@@ -95,15 +96,18 @@ class PagSeguroNotificationOrderPrestashop
 
     private function createTransaction()
     {
-        
         $this->obj_transaction = PagSeguroNotificationService::checkTransaction(
             $this->obj_credential,
             $this->notification_code
         );
         
         $transaction = $this->isNotNull($this->obj_transaction);
-        
-        $this->reference = $transaction ? (int) $this->obj_transaction->getReference() : null;
+
+        if (strpos($this->obj_transaction->getReference(), Configuration::get('PAGSEGURO_ID')) === false) {
+            throw new Exception("ID_PAGSEGURO_INCOMPATIVEL", 1);
+        }
+		
+		$this->reference = $transaction ? (int)EncryptionIdPagSeguro::decrypt($this->obj_transaction->getReference()) : null;
     }
 
     private function updateCms()
@@ -177,5 +181,20 @@ class PagSeguroNotificationOrderPrestashop
         if (! Db::getInstance(_PS_USE_SQL_SLAVE_)->Execute($sql)) {
             die(Tools::displayError('Error when updating Transaction Code from PagSeguro in database'));
         }
+    }
+
+    private function createLog($e)
+    {
+        /* Retrieving configurated default charset */
+        PagSeguroConfig::setApplicationCharset(Configuration::get('PAGSEGURO_CHARSET'));
+        
+        /* Retrieving configurated default log info */
+        if (Configuration::get('PAGSEGURO_LOG_ACTIVE')) {
+            PagSeguroConfig::activeLog(_PS_ROOT_DIR_ . Configuration::get('PAGSEGURO_LOG_FILELOCATION'));
+        }
+
+        LogPagSeguro::info(
+            "PagSeguroService.Notification( 'Erro ao processar notificação. ErrorMessage: ".$e." ') - end"
+            );
     }
 }
