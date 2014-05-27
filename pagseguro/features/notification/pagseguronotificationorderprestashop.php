@@ -44,12 +44,12 @@ class PagSeguroNotificationOrderPrestashop
 
     public function postProcess($post)
     {
-        
+
         try {
 
             $this->createNotification($post);
             $this->createCredential();
-            $this->inicializeObjects();        
+            $this->inicializeObjects();
 
             if ($this->obj_notification_type->getValue() == $this->notification_type) {
                 $this->createTransaction();
@@ -58,13 +58,12 @@ class PagSeguroNotificationOrderPrestashop
             if ($this->obj_transaction) {
                 $this->updateCms();
             }
-            
+
         } catch (Exception $e) {
 
             $this->createLog($e->getMessage());
         }
-        
-        
+
     }
 
     private function createNotification(Array $post)
@@ -73,7 +72,7 @@ class PagSeguroNotificationOrderPrestashop
             trim($post['notificationType']) : null);
 
         $this->notification_code = (isset($post['notificationCode']) && trim($post['notificationCode']) !== '' ?
-            trim($post['notificationCode']) : null);  
+            trim($post['notificationCode']) : null);
     }
 
     private function createCredential()
@@ -100,36 +99,36 @@ class PagSeguroNotificationOrderPrestashop
             $this->obj_credential,
             $this->notification_code
         );
-        
+
         $transaction = $this->isNotNull($this->obj_transaction);
 
         if (strpos($this->obj_transaction->getReference(), Configuration::get('PAGSEGURO_ID')) === false) {
             throw new Exception("ID_PAGSEGURO_INCOMPATIVEL", 1);
         }
-		
-		$this->reference = $transaction ? (int)EncryptionIdPagSeguro::decrypt($this->obj_transaction->getReference()) : null;
+
+        $this->reference = $transaction ? (int)EncryptionIdPagSeguro::decrypt($this->obj_transaction->getReference()) : null;
     }
 
     private function updateCms()
     {
-        
+
         $id_status = ($this->isNotNull($this->obj_transaction->getStatus()->getValue())) ?
         (int) $this->obj_transaction->getStatus()->getValue() : null;
 
         if ($this->isNotNull($id_status)) {
             $id_st_transaction = (int) $this->returnIdOrderByStatusPagSeguro(Util::getStatusCMS($id_status));
         }
-        
+
         if ($this->isNotNull($id_st_transaction)) {
-            Util::createAddOrderHistory((int)$this->reference,$id_st_transaction);
+            Util::createAddOrderHistory((int)$this->reference, $id_st_transaction);
         }
-        
+
         $this->saveTransactionId($this->obj_transaction->getCode(), $this->obj_transaction->getReference());
     }
 
     private function returnIdOrderByStatusPagSeguro($value)
     {
-        
+
         $isDeleted = version_compare(_PS_VERSION_, '1.5.0.3', '>') ? ' WHERE deleted = 0' : '';
 
         $sql = 'SELECT distinct os.`id_order_state`
@@ -187,7 +186,7 @@ class PagSeguroNotificationOrderPrestashop
     {
         /* Retrieving configurated default charset */
         PagSeguroConfig::setApplicationCharset(Configuration::get('PAGSEGURO_CHARSET'));
-        
+
         /* Retrieving configurated default log info */
         if (Configuration::get('PAGSEGURO_LOG_ACTIVE')) {
             PagSeguroConfig::activeLog(_PS_ROOT_DIR_ . Configuration::get('PAGSEGURO_LOG_FILELOCATION'));
@@ -195,6 +194,6 @@ class PagSeguroNotificationOrderPrestashop
 
         LogPagSeguro::info(
             "PagSeguroService.Notification( 'Erro ao processar notificação. ErrorMessage: ".$e." ') - end"
-            );
+        );
     }
 }

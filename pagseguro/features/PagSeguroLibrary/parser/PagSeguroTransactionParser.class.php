@@ -341,7 +341,7 @@ class PagSeguroTransactionParser extends PagSeguroServiceParser
      */
     private static function parseTransactionSummary($data)
     {
-		
+        
         $transactionSummary = new PagSeguroTransactionSummary();
 
         if (isset($data['type'])) {

@@ -274,7 +274,7 @@ class PagSeguroTransactionSearchService
             );
 
             $httpStatus = new PagSeguroHttpStatus($connection->getStatus());
-			
+        	
             switch ($httpStatus->getType()) {
 
                 case 'OK':
